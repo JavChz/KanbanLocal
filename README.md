@@ -1,6 +1,6 @@
-# PersonalKanban
+# KanbanLocal
 
-PersonalKanban is a static, local-first Single Page Application designed as a simple alternative to standard todo lists. The application does not utilize a backend database, API, or external storage. All user configurations, tasks, and project definitions are saved locally in the browser via localStorage using Zustand persistence.
+KanbanLocal is a static, local-first Single Page Application designed as a simple alternative to standard todo lists. The application does not utilize a backend database, API, or external storage. All user configurations, tasks, and project definitions are saved locally in the browser via localStorage using Zustand persistence.
 
 ## Project Status
 

@@ -66,7 +66,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `personalkanban-backup-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `kanbanlocal-backup-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -513,7 +513,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <Kanban size={32} className="text-blue-500" />
                 <div>
                   <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-lg leading-tight">
-                    PersonalKanban
+                    KanbanLocal
                   </h4>
                 </div>
               </div>

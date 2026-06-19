@@ -11,7 +11,7 @@ export const useKanbanStore = create<KanbanState>()(
       ...createSettingsSlice(...a),
     }),
     {
-      name: 'personal-kanban-storage',
+      name: 'kanban-local-storage',
     }
   )
 );

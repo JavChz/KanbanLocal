@@ -4,7 +4,7 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   en: {
     translation: {
-      app_title: "PersonalKanban",
+      app_title: "KanbanLocal",
       home: "Home",
       global_view: "Global View",
       settings: "Settings",
@@ -72,7 +72,7 @@ const resources = {
       nav_global: "Navigate to Global View",
       open_settings: "Open Settings Modal",
       new_board_task: "New Board / New Task",
-      about_desc: "PersonalKanban is a fast, offline-first Kanban board built to organize projects and task flows dynamically. All of your data is saved instantly to your local browser storage.",
+      about_desc: "KanbanLocal is a fast, offline-first Kanban board built to organize projects and task flows dynamically. All of your data is saved instantly to your local browser storage.",
       export_desc: "Download a JSON copy of your workspace definition. Select which board configurations and card definitions to include in this backup.",
       import_desc: "Restore backup workspace state. Warning: importing will replace all current browser tasks and boards.",
       unsplash_profile_credit: "Find more beautiful background images at",
@@ -99,7 +99,7 @@ const resources = {
   },
   fr: {
     translation: {
-      app_title: "PersonalKanban",
+      app_title: "KanbanLocal",
       home: "Accueil",
       global_view: "Vue Globale",
       settings: "Paramètres",
@@ -167,7 +167,7 @@ const resources = {
       nav_global: "Aller à la vue globale",
       open_settings: "Ouvrir les paramètres",
       new_board_task: "Nouveau tableau / Nouvelle tâche",
-      about_desc: "PersonalKanban est un tableau Kanban rapide et hors ligne conçu pour organiser les projets et les flux de tâches de manière dynamique. Toutes vos données sont enregistrées instantanément dans le stockage local de votre navigateur.",
+      about_desc: "KanbanLocal est un tableau Kanban rapide et hors ligne conçu pour organiser les projets et les flux de tâches de manière dynamique. Toutes vos données sont enregistrées instantanément dans le stockage local de votre navigateur.",
       export_desc: "Téléchargez une copie JSON de la définition de votre espace de travail. Sélectionnez les configurations de tableau et les définitions de carte à inclure dans cette sauvegarde.",
       import_desc: "Restaurer l'état de l'espace de travail sauvegardé. Attention : l'importation remplacera toutes les tâches et tous les tableaux actuels du navigateur.",
       unsplash_profile_credit: "Trouvez plus de belles images d'arrière-plan sur",
@@ -194,7 +194,7 @@ const resources = {
   },
   ja: {
     translation: {
-      app_title: "PersonalKanban",
+      app_title: "KanbanLocal",
       home: "ホーム",
       global_view: "全体ビュー",
       settings: "設定",
@@ -262,7 +262,7 @@ const resources = {
       nav_global: "全体ビューへ移動",
       open_settings: "設定を開く",
       new_board_task: "新規ボード / 新規タスク",
-      about_desc: "PersonalKanbanは、プロジェクトやタスクの流れを動的に整理するために構築された、高速でオフラインファーストのカンバンボードです。すべてのデータはブラウザのローカルストレージに即座に保存されます。",
+      about_desc: "KanbanLocalは、プロジェクトやタスクの流れを動的に整理するために構築された、高速でオフラインファーストのカンバンボードです。すべてのデータはブラウザのローカルストレージに即座に保存されます。",
       export_desc: "ワークスペース定義のJSONコピーをダウンロードします。このバックアップに含めるボード設定とカード定義を選択します。",
       import_desc: "バックアップワークスペースのステートを復元します。警告：インポートすると、現在のブラウザのすべてのタスクとボードが置き換えられます。",
       unsplash_profile_credit: "Unsplashでさらに美しい背景画像を探す",
@@ -289,7 +289,7 @@ const resources = {
   },
   es: {
     translation: {
-      app_title: "PersonalKanban",
+      app_title: "KanbanLocal",
       home: "Inicio",
       global_view: "Vista Global",
       settings: "Configuración",
@@ -357,7 +357,7 @@ const resources = {
       nav_global: "Ir a la vista global",
       open_settings: "Abrir configuración",
       new_board_task: "Nuevo tablero / Nueva tarea",
-      about_desc: "PersonalKanban es un tablero Kanban rápido y local diseñado para organizar proyectos y flujos de tareas de forma dinámica. Todos sus datos se guardan instantáneamente en el almacenamiento local de su navegador.",
+      about_desc: "KanbanLocal es un tablero Kanban rápido y local diseñado para organizar proyectos y flujos de tareas de forma dinámica. Todos sus datos se guardan instantáneamente en el almacenamiento local de su navegador.",
       export_desc: "Descargue una copia JSON de la definición de su espacio de trabajo. Seleccione qué configuraciones de tablero y definiciones de tarjetas desea incluir en esta copia de seguridad.",
       import_desc: "Restaurar el estado de la copia de seguridad del espacio de trabajo. Advertencia: la importación reemplazará todas las tareas y tableros actuales del navegador.",
       unsplash_profile_credit: "Encuentra más imágenes de fondo hermosas en",

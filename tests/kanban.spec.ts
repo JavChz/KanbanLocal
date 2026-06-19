@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('PersonalKanban E2E Tests', () => {
+test.describe('KanbanLocal E2E Tests', () => {
   
   test.beforeEach(async ({ page }) => {
     // Navigate to the root URL (configured base basename is /KanbanLocal/)
@@ -9,7 +9,7 @@ test.describe('PersonalKanban E2E Tests', () => {
 
   test('should display initial empty state and allow project creation', async ({ page }) => {
     // Ensure title or branding is present
-    await expect(page.locator('aside')).toContainText('PersonalKanban');
+    await expect(page.locator('aside')).toContainText('KanbanLocal');
 
     // Click on Add Project button
     await page.locator('button:has-text("Add Project")').first().click();

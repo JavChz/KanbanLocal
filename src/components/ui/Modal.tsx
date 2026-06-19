@@ -7,9 +7,10 @@ interface ModalProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  overflowVisible?: boolean;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, overflowVisible }) => {
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -50,7 +51,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-md glass-panel p-6 rounded-2xl shadow-2xl z-10 flex flex-col gap-4 animate-fade-in scale-100 max-h-[90vh] overflow-y-auto">
+      <div className={`relative w-full max-w-md glass-panel p-6 rounded-2xl shadow-2xl z-10 flex flex-col gap-4 animate-fade-in scale-100 max-h-[90vh] ${overflowVisible ? 'overflow-visible' : 'overflow-y-auto'}`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/30 pb-3">
           {title ? (

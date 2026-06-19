@@ -4,6 +4,7 @@ import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { Textarea } from '../ui/Textarea';
 import { Button } from '../ui/Button';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import { useKanbanStore } from '../../store/useKanbanStore';
 import { Trash2, Plus, X, Link2, Tag, ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +26,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose }) =
 
   const [newTag, setNewTag] = useState('');
   const [newLink, setNewLink] = useState('');
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   // Populate state when task is loaded
   useEffect(() => {
@@ -50,10 +52,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose }) =
   };
 
   const handleDelete = () => {
-    if (window.confirm(t('confirm_delete_task'))) {
-      deleteTask(task.id);
-      onClose();
-    }
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    deleteTask(task.id);
+    onClose();
   };
 
   const handleAddTag = (e: React.FormEvent) => {
@@ -88,7 +92,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose }) =
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('task_details')}>
+    <>
+      <Modal isOpen={isOpen} onClose={onClose} title={t('task_details')}>
       <div className="flex flex-col gap-5 text-left">
         
         {/* Task Title */}
@@ -215,5 +220,15 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose }) =
 
       </div>
     </Modal>
+    
+    <ConfirmModal
+      isOpen={isDeleteConfirmOpen}
+      onClose={() => setIsDeleteConfirmOpen(false)}
+      onConfirm={handleConfirmDelete}
+      title={t('delete')}
+      message={t('confirm_delete_task')}
+      confirmText={t('delete')}
+    />
+    </>
   );
 };

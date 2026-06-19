@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useKanbanStore } from '../store/useKanbanStore';
 import { Folder, Plus, CheckCircle, Clock, ListTodo, Circle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,14 @@ import { Input } from '../components/ui/Input';
 import { ColorPicker } from '../components/ui/ColorPicker';
 import { Button } from '../components/ui/Button';
 
+const getRandomProjectColor = () => {
+  const hues = ['slate', 'red', 'orange', 'amber', 'emerald', 'blue', 'indigo', 'violet'];
+  const shades = ['400', '500', '600', '700', '800'];
+  const randomHue = hues[Math.floor(Math.random() * hues.length)];
+  const randomShade = shades[Math.floor(Math.random() * shades.length)];
+  return `${randomHue}-${randomShade}`;
+};
+
 export const HomeView: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -16,22 +24,24 @@ export const HomeView: React.FC = () => {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectColor, setNewProjectColor] = useState('blue-500');
+  const [newProjectColor, setNewProjectColor] = useState(getRandomProjectColor);
+
+  const location = useLocation();
 
   // Trigger project creation modal if action=new-project query parameter is found
   React.useEffect(() => {
-    if (window.location.search.includes('action=new-project')) {
+    if (location.search.includes('action=new-project')) {
       setIsCreateOpen(true);
       navigate('/', { replace: true });
     }
-  }, [navigate]);
+  }, [location.search, navigate]);
 
   const handleCreateProject = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectName.trim()) return;
     const newId = addProject(newProjectName.trim(), newProjectColor);
     setNewProjectName('');
-    setNewProjectColor('blue-500');
+    setNewProjectColor(getRandomProjectColor());
     setIsCreateOpen(false);
     navigate(`/project/${newId}`);
   };
@@ -51,7 +61,7 @@ export const HomeView: React.FC = () => {
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-slate-50 md:text-4xl">
           {t('home')}
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
+        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
           Create project boards, organize your tasks, and drag them between stages. All data is saved directly in your browser.
         </p>
       </div>
@@ -65,7 +75,7 @@ export const HomeView: React.FC = () => {
             <Folder size={20} />
           </div>
           <div>
-            <span className="text-xs text-slate-400 dark:text-slate-500 block font-medium uppercase tracking-wider">
+            <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">
               {t('projects')}
             </span>
             <span className="text-xl font-bold font-mono text-slate-800 dark:text-slate-100">
@@ -80,7 +90,7 @@ export const HomeView: React.FC = () => {
             <Clock size={20} />
           </div>
           <div>
-            <span className="text-xs text-slate-400 dark:text-slate-500 block font-medium uppercase tracking-wider">
+            <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">
               {t('in_progress')}
             </span>
             <span className="text-xl font-bold font-mono text-slate-800 dark:text-slate-100">
@@ -95,7 +105,7 @@ export const HomeView: React.FC = () => {
             <CheckCircle size={20} />
           </div>
           <div>
-            <span className="text-xs text-slate-400 dark:text-slate-500 block font-medium uppercase tracking-wider">
+            <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">
               {t('done')}
             </span>
             <span className="text-xl font-bold font-mono text-slate-800 dark:text-slate-100">
@@ -110,7 +120,7 @@ export const HomeView: React.FC = () => {
             <ListTodo size={20} />
           </div>
           <div className="flex-1">
-            <span className="text-xs text-slate-400 dark:text-slate-500 block font-medium uppercase tracking-wider">
+            <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">
               Progress
             </span>
             <div className="flex items-center gap-2 mt-0.5">
@@ -169,21 +179,21 @@ export const HomeView: React.FC = () => {
                       {proj.name}
                     </h4>
                   </div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium font-mono">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium font-mono">
                     ID: {proj.id.substring(0, 8)}...
                   </p>
                 </div>
 
                 <div className="flex gap-4 items-center border-t border-slate-200/50 dark:border-slate-800/30 pt-3">
                   <div className="flex items-center gap-1.5">
-                    <Clock size={14} className="text-slate-400" />
-                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    <Clock size={14} className="text-slate-500 dark:text-slate-400" />
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-350">
                       {openCount} active
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <CheckCircle size={14} className="text-green-500" />
-                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    <CheckCircle size={14} className="text-green-600 dark:text-green-500" />
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-350">
                       {doneCount} completed
                     </span>
                   </div>
@@ -199,22 +209,25 @@ export const HomeView: React.FC = () => {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         title={t('add_project')}
+        overflowVisible={true}
       >
         <form onSubmit={handleCreateProject} className="flex flex-col gap-5 text-left">
-          <Input
-            label={t('project_name')}
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-            placeholder="e.g., Personal Errands"
-            required
-            autoFocus
-          />
-
-          <ColorPicker
-            label={t('project_color')}
-            value={newProjectColor}
-            onChange={setNewProjectColor}
-          />
+          <div className="flex items-end gap-2.5">
+            <div className="flex-1">
+              <Input
+                label={t('project_name')}
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                placeholder="e.g., Personal Errands"
+                required
+                autoFocus
+              />
+            </div>
+            <ColorPicker
+              value={newProjectColor}
+              onChange={setNewProjectColor}
+            />
+          </div>
 
           <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-800/30">
             <Button

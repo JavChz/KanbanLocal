@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useKanbanStore } from '../../store/useKanbanStore';
-import { Home, Globe, Settings, Menu, X, Kanban, Plus, Circle } from 'lucide-react';
+import { Home, Globe, Settings, Menu, X, Kanban, Plus, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getColorStyles } from '../../utils/colors';
 
@@ -14,6 +14,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { t } = useTranslation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sidebar_collapsed');
+      return saved ? JSON.parse(saved) : false;
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sidebar_collapsed', JSON.stringify(isSidebarCollapsed));
+    } catch (e) {
+      console.error('Failed to save sidebar state to localStorage', e);
+    }
+  }, [isSidebarCollapsed]);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
@@ -57,16 +74,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* Sidebar Panel */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 w-64 glass-panel border-r border-slate-200/50 dark:border-slate-800/30 z-50 transform md:transform-none transition-transform duration-300 md:sticky md:top-0 md:h-screen flex flex-col ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        className={`fixed top-0 bottom-0 left-0 w-64 glass-panel border-r border-slate-200/50 dark:border-slate-800/30 z-50 transform transition-all duration-300 md:sticky md:top-0 md:h-screen flex flex-col overflow-hidden ${
+          isSidebarOpen
+            ? 'translate-x-0 w-64'
+            : isSidebarCollapsed
+            ? '-translate-x-full md:w-0 md:opacity-0 md:pointer-events-none md:border-r-0'
+            : '-translate-x-full md:translate-x-0 md:w-64 md:opacity-100'
         }`}
       >
         {/* Sidebar Header */}
-        <div className="p-5 border-b border-slate-200/50 dark:border-slate-800/30 flex items-center gap-2.5">
-          <Kanban size={22} className="text-blue-500" />
-          <span className="font-bold text-slate-800 dark:text-slate-50 text-lg tracking-wide">
-            {t('app_title')}
-          </span>
+        <div className="p-5 border-b border-slate-200/50 dark:border-slate-800/30 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Kanban size={22} className="text-blue-500" />
+            <span className="font-bold text-slate-800 dark:text-slate-50 text-lg tracking-wide">
+              {t('app_title')}
+            </span>
+          </div>
+          <button
+            onClick={() => setIsSidebarCollapsed(true)}
+            className="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/55 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+            aria-label="Collapse Sidebar"
+            title="Collapse Sidebar"
+          >
+            <ChevronLeft size={18} />
+          </button>
         </div>
 
         {/* Sidebar Navigation */}
@@ -83,7 +114,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-sm dark:bg-blue-500'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/55 dark:hover:bg-slate-800/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/55 dark:hover:bg-slate-800/40'
                   }`
                 }
               >
@@ -96,12 +127,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Projects Submenu */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between px-2">
-              <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 {t('projects')}
               </span>
               <button
                 onClick={handleCreateProjectClick}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+                className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
                 title={t('add_project')}
               >
                 <Plus size={14} />
@@ -110,7 +141,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             <div className="space-y-0.5 max-h-48 overflow-y-auto pr-1">
               {projects.length === 0 ? (
-                <p className="text-xs text-slate-400 dark:text-slate-500 px-2 italic">
+                <p className="text-xs text-slate-500 dark:text-slate-400 px-2 italic">
                   {t('no_projects')}
                 </p>
               ) : (
@@ -125,7 +156,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         `flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-150 ${
                           isActive
                             ? 'bg-blue-600/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/55 dark:hover:bg-slate-800/40'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/55 dark:hover:bg-slate-800/40'
                         }`
                       }
                     >
@@ -146,9 +177,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main Content Pane */}
-      <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-x-hidden relative min-h-[calc(100vh-53px)] md:min-h-screen">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-x-hidden relative min-h-[calc(100vh-53px)] md:min-h-screen transition-all duration-300">
         <div id="modal-root" /> {/* Render target for portals */}
-        <div className="max-w-7xl mx-auto h-full flex flex-col">
+        {isSidebarCollapsed && (
+          <button
+            onClick={() => setIsSidebarCollapsed(false)}
+            className="hidden md:flex absolute top-8 left-8 p-2 rounded-xl glass-panel border border-slate-200/50 dark:border-slate-800/30 text-slate-600 dark:text-slate-350 hover:bg-slate-200/55 dark:hover:bg-slate-800/40 transition-all duration-200 shadow-md hover:scale-105 active:scale-95 z-30 cursor-pointer"
+            aria-label="Expand Sidebar"
+            title="Expand Sidebar"
+          >
+            <ChevronRight size={18} />
+          </button>
+        )}
+        <div className={`max-w-7xl mx-auto h-full flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'md:pl-12' : ''}`}>
           {children}
         </div>
       </main>

@@ -23,7 +23,7 @@ export const useKeyboardShortcuts = () => {
             break;
           case 'n':
             e.preventDefault();
-            if (window.location.pathname.includes('/project/')) {
+            if (window.location.href.includes('/project/')) {
               // Dispatch custom event to trigger task creation form in the Todo stage
               window.dispatchEvent(new CustomEvent('trigger-add-todo'));
             } else {

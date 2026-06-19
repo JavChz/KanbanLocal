@@ -33,19 +33,19 @@ test.describe('PersonalKanban E2E Tests', () => {
 
     // 2. Add task to Todo column
     // The columns have add buttons. We'll target the one in the TODO column
-    const todoColumn = page.locator('div:has-text("To Do")').first();
+    const todoColumn = page.locator('.glass-panel').filter({ has: page.locator('h4', { hasText: 'To Do' }) });
     await todoColumn.locator('button[title="Add Task"]').click();
 
-    // Fill task input
-    await page.locator('input[placeholder="Task Title"]').fill('Write Tests');
-    // Click check to submit
-    await page.locator('button:has-text("")').locator('svg').nth(1).click(); // the check icon
+    // Fill task input and press Enter to submit
+    const taskInput = page.locator('input[placeholder="Task Title"]');
+    await taskInput.fill('Write Tests');
+    await taskInput.press('Enter');
 
     // Verify card is added
-    await expect(page.locator('div.glass-card')).toContainText('Write Tests');
+    await expect(todoColumn.locator('div.glass-card')).toContainText('Write Tests');
 
     // 3. Open details modal
-    await page.locator('div.glass-card:has-text("Write Tests")').click();
+    await todoColumn.locator('div.glass-card:has-text("Write Tests")').click();
     await expect(page.locator('h3')).toContainText('Task Details');
 
     // Fill details
@@ -73,5 +73,89 @@ test.describe('PersonalKanban E2E Tests', () => {
     await page.locator('button:has-text("Español")').click();
     // The dashboard header or sidebar should reflect Spanish
     await expect(page.locator('nav')).toContainText('Vista Global');
+  });
+
+  test('should support sidebar collapse/expand and custom delete confirmation modals', async ({ page }) => {
+    // 1. Sidebar Collapse and Expand
+    const sidebar = page.locator('aside');
+    const collapseBtn = page.locator('button[aria-label="Collapse Sidebar"]');
+    
+    // Check sidebar starts visible (translate-x-0 or not collapsed)
+    await expect(sidebar).toBeVisible();
+    
+    // Collapse the sidebar
+    await collapseBtn.click();
+    
+    // Check that sidebar is hidden (w-0 / -translate-x-full classes)
+    await expect(sidebar).toHaveClass(/md:w-0/);
+    
+    // Expand sidebar using the floating expand button
+    const expandBtn = page.locator('button[aria-label="Expand Sidebar"]');
+    await expect(expandBtn).toBeVisible();
+    await expandBtn.click();
+    
+    // Sidebar should be visible again
+    await expect(sidebar).toHaveClass(/md:w-64/);
+
+    // 2. Create Project
+    await page.locator('button:has-text("Add Project")').first().click();
+    await page.locator('input[placeholder="e.g., Personal Errands"]').fill('Delete Me Project');
+    await page.locator('button:has-text("Create")').click();
+    await expect(page.locator('h2')).toContainText('Delete Me Project');
+
+    // 3. Add a Task
+    const todoColumn = page.locator('.glass-panel').filter({ has: page.locator('h4', { hasText: 'To Do' }) });
+    await todoColumn.locator('button[title="Add Task"]').click();
+    const taskInput = page.locator('input[placeholder="Task Title"]');
+    await taskInput.fill('Delete Me Task');
+    await taskInput.press('Enter');
+    await expect(todoColumn.locator('div.glass-card')).toContainText('Delete Me Task');
+
+    // 4. Test Task Delete Custom Confirmation
+    await todoColumn.locator('div.glass-card:has-text("Delete Me Task")').click();
+    await expect(page.locator('h3')).toContainText('Task Details');
+    
+    // Click Delete button inside Task details
+    await page.locator('button:has-text("Delete")').first().click();
+    
+    // Verify custom ConfirmModal appears
+    const confirmModalHeader = page.locator('h3:has-text("Delete")').last();
+    await expect(confirmModalHeader).toBeVisible();
+    await expect(page.locator('text=Confirm deleting this task.')).toBeVisible();
+    
+    // Click Cancel
+    await page.locator('button:has-text("Cancel")').last().click();
+    // Modal should close and Task Details should still be visible
+    await expect(page.locator('h3')).toContainText('Task Details');
+
+    // Click Delete again, and Confirm
+    await page.locator('button:has-text("Delete")').first().click();
+    await page.locator('button:has-text("Delete")').last().click(); // Custom confirm button has 'Delete' text
+    
+    // Task should be gone
+    await expect(page.locator('text=Delete Me Task')).not.toBeVisible();
+    
+    // 5. Test Project Delete Custom Confirmation
+    await page.locator('button:has-text("Edit Project")').click();
+    await expect(page.locator('h3')).toContainText('Edit Project');
+    
+    // Click Delete project
+    await page.locator('button:has-text("Delete")').first().click();
+    
+    // Verify custom ConfirmModal appears
+    await expect(page.locator('h3:has-text("Delete Project")')).toBeVisible();
+    await expect(page.locator('text=Confirm deleting this project. All associated tasks will be permanently removed.')).toBeVisible();
+    
+    // Click Cancel
+    await page.locator('button:has-text("Cancel")').last().click();
+    await expect(page.locator('h3')).toContainText('Edit Project');
+    
+    // Click Delete again, and Confirm
+    await page.locator('button:has-text("Delete")').first().click();
+    await page.locator('button:has-text("Delete")').last().click();
+    
+    // Should be redirected to home page
+    await expect(page).toHaveURL(/.*\/$/);
+    await expect(page.locator('h1')).toContainText('Home');
   });
 });

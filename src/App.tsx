@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout/Layout';
 import { RedirectGuard } from './components/Layout/RedirectGuard';
 import { HomeView } from './views/HomeView';
@@ -9,6 +9,7 @@ import { SettingsView } from './views/SettingsView';
 import { useKanbanStore } from './store/useKanbanStore';
 import { useTranslation } from 'react-i18next';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useTheme } from './hooks/useTheme';
 
 const ShortcutManager = () => {
   useKeyboardShortcuts();
@@ -16,6 +17,7 @@ const ShortcutManager = () => {
 };
 
 function App() {
+  useTheme(); // Initialize and synchronize theme class on load
   const { i18n } = useTranslation();
   const language = useKanbanStore((s) => s.language);
 
@@ -25,7 +27,7 @@ function App() {
   }, [language, i18n]);
 
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <HashRouter>
       <ShortcutManager />
       <RedirectGuard>
         <Layout>
@@ -37,7 +39,7 @@ function App() {
           </Routes>
         </Layout>
       </RedirectGuard>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

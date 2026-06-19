@@ -92,7 +92,7 @@ export const GlobalView: React.FC = () => {
       <div className="glass-panel p-4.5 rounded-2xl flex flex-col md:flex-row gap-4 items-end">
         {/* Search input */}
         <div className="flex-1 w-full relative flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
+          <label className="text-xs font-semibold text-slate-700 dark:text-slate-350 uppercase tracking-wider flex items-center gap-1">
             <Search size={12} />
             Search
           </label>
@@ -104,7 +104,7 @@ export const GlobalView: React.FC = () => {
               placeholder={t('search_placeholder')}
               className="glass-input w-full pl-9 pr-4 py-2 rounded-lg text-sm"
             />
-            <Search size={14} className="absolute left-3.5 top-3 text-slate-400" />
+            <Search size={14} className="absolute left-3.5 top-3 text-slate-500 dark:text-slate-400" />
           </div>
         </div>
 
@@ -139,14 +139,14 @@ export const GlobalView: React.FC = () => {
           ) : (
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-slate-200/40 dark:bg-slate-900/30 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                <tr className="bg-slate-200/40 dark:bg-slate-900/30 text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-350 border-b border-slate-200 dark:border-slate-800">
                   <th className="px-5 py-3.5 text-left w-1/2">{t('task_title')}</th>
                   <th className="px-5 py-3.5 text-left">{t('project')}</th>
                   <th className="px-5 py-3.5 text-left">{t('status')}</th>
                   <th className="px-5 py-3.5 text-right w-16"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-250/20 dark:divide-slate-800/20">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/20">
                 {filteredTasks.map((task) => {
                   const proj = projects.find((p) => p.id === task.projectId);
                   const colorStyles = proj ? getColorStyles(proj.color) : { text: 'text-slate-400', bg: 'bg-slate-400' };
@@ -163,7 +163,7 @@ export const GlobalView: React.FC = () => {
                           {task.title}
                         </div>
                         {task.description && (
-                          <div className="text-xs text-slate-500 dark:text-slate-450 line-clamp-1 mt-0.5 max-w-lg">
+                          <div className="text-xs text-slate-650 dark:text-slate-400 line-clamp-1 mt-0.5 max-w-lg">
                             {task.description}
                           </div>
                         )}

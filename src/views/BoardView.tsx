@@ -9,6 +9,7 @@ import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { ColorPicker } from '../components/ui/ColorPicker';
 import { Button } from '../components/ui/Button';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import {
   DndContext,
   PointerSensor,
@@ -46,6 +47,7 @@ export const BoardView: React.FC = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // Project Edit fields
@@ -146,10 +148,12 @@ export const BoardView: React.FC = () => {
   };
 
   const handleDeleteProjectDetails = () => {
-    if (window.confirm(t('confirm_delete_project'))) {
-      deleteProject(id);
-      navigate('/');
-    }
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDeleteProject = () => {
+    deleteProject(id);
+    navigate('/');
   };
 
   const colorStyles = getColorStyles(project.color);
@@ -235,21 +239,24 @@ export const BoardView: React.FC = () => {
         isOpen={isEditProjectOpen}
         onClose={() => setIsEditProjectOpen(false)}
         title={t('edit_project')}
+        overflowVisible={true}
       >
         <div className="flex flex-col gap-5 text-left">
-          <Input
-            label={t('project_name')}
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            placeholder={t('project_name')}
-            required
-          />
-
-          <ColorPicker
-            label={t('project_color')}
-            value={editColor}
-            onChange={setEditColor}
-          />
+          <div className="flex items-end gap-2.5">
+            <div className="flex-1">
+              <Input
+                label={t('project_name')}
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder={t('project_name')}
+                required
+              />
+            </div>
+            <ColorPicker
+              value={editColor}
+              onChange={setEditColor}
+            />
+          </div>
 
           <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-800/30">
             <Button
@@ -281,6 +288,16 @@ export const BoardView: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Delete Project Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleConfirmDeleteProject}
+        title={t('delete_project')}
+        message={t('confirm_delete_project')}
+        confirmText={t('delete')}
+      />
 
     </div>
   );

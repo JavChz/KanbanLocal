@@ -62,7 +62,7 @@ export const HomeView: React.FC = () => {
           {t('home')}
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-          Create project boards, organize your tasks, and drag them between stages. All data is saved directly in your browser.
+          {t('home_desc')}
         </p>
       </div>
 
@@ -121,7 +121,7 @@ export const HomeView: React.FC = () => {
           </div>
           <div className="flex-1">
             <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">
-              Progress
+              {t('progress')}
             </span>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-xl font-bold font-mono text-slate-800 dark:text-slate-100">
@@ -142,7 +142,7 @@ export const HomeView: React.FC = () => {
       {/* Projects Section */}
       <div className="flex flex-col gap-4 text-left">
         <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">
-          Your Boards
+          {t('your_boards')}
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -188,13 +188,13 @@ export const HomeView: React.FC = () => {
                   <div className="flex items-center gap-1.5">
                     <Clock size={14} className="text-slate-500 dark:text-slate-400" />
                     <span className="text-xs font-semibold text-slate-700 dark:text-slate-350">
-                      {openCount} active
+                      {openCount} {t('active')}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <CheckCircle size={14} className="text-green-600 dark:text-green-500" />
                     <span className="text-xs font-semibold text-slate-700 dark:text-slate-350">
-                      {doneCount} completed
+                      {doneCount} {t('completed')}
                     </span>
                   </div>
                 </div>

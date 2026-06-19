@@ -19,7 +19,7 @@ export const ThemeToggle: React.FC = () => {
       <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
         {t('theme')}
       </span>
-      <div className="glass-panel p-1 rounded-xl flex gap-1 w-full max-w-sm">
+      <div className="glass-panel p-1 rounded-xl flex gap-1 w-full">
         {options.map(({ mode, icon, label }) => {
           const isActive = theme === mode;
           return (
@@ -34,7 +34,7 @@ export const ThemeToggle: React.FC = () => {
               title={label}
             >
               {icon}
-              <span className="hidden sm:inline">{label}</span>
+              <span>{label}</span>
             </button>
           );
         })}

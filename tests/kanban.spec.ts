@@ -68,7 +68,9 @@ test.describe('PersonalKanban E2E Tests', () => {
     await expect(page.locator('table')).toContainText('Ensure E2E coverage.');
 
     // 5. Verify Settings language toggle
-    await page.locator('nav').locator('a:has-text("Settings")').click();
+    await page.locator('button:has-text("Settings")').click();
+    // Open language dropdown (current language is English)
+    await page.locator('button:has-text("English")').click();
     // Click Spanish language button
     await page.locator('button:has-text("Español")').click();
     // The dashboard header or sidebar should reflect Spanish

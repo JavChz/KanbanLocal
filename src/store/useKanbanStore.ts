@@ -105,9 +105,9 @@ export const useKanbanStore = create<KanbanState>()(
         return id;
       },
 
-      updateProject: (id, name, color) => {
+      updateProject: (id, name, color, background) => {
         set((state) => ({
-          projects: state.projects.map((p) => (p.id === id ? { ...p, name, color } : p)),
+          projects: state.projects.map((p) => (p.id === id ? { ...p, name, color, background } : p)),
         }));
       },
 
@@ -174,10 +174,16 @@ export const useKanbanStore = create<KanbanState>()(
               if (typeof p.id !== 'string' || typeof p.name !== 'string' || typeof p.color !== 'string') {
                 return false;
               }
+              const background = p.background && typeof p.background === 'object' &&
+                (p.background.type === 'theme' || p.background.type === 'solid' || p.background.type === 'image' || p.background.type === 'custom') &&
+                typeof p.background.value === 'string'
+                  ? { type: p.background.type as 'theme' | 'solid' | 'image' | 'custom', value: p.background.value }
+                  : undefined;
               validatedProjects.push({
                 id: p.id,
                 name: p.name,
                 color: p.color,
+                background,
               });
             }
           }

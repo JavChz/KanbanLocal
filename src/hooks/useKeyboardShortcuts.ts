@@ -6,8 +6,9 @@ export const useKeyboardShortcuts = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check for Alt modifier (ignoring other modifiers like Ctrl or Meta)
-      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+      // Check for Ctrl/Cmd modifier (ignoring other modifiers like Alt or Shift)
+      const isMod = e.ctrlKey || e.metaKey;
+      if (isMod && !e.altKey && !e.shiftKey) {
         switch (e.key.toLowerCase()) {
           case 'h':
             e.preventDefault();

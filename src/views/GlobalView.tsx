@@ -20,7 +20,7 @@ export const GlobalView: React.FC = () => {
 
   // Status options for Select dropdown
   const statusOptions = [
-    { value: 'ALL', label: t('all_projects').replace('projects', 'statuses') },
+    { value: 'ALL', label: t('all_statuses') },
     { value: 'TODO', label: t('todo') },
     { value: 'IN_PROGRESS', label: t('in_progress') },
     { value: 'DONE', label: t('done') },
@@ -84,7 +84,7 @@ export const GlobalView: React.FC = () => {
           {t('global_view')}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          A consolidated view of all tasks across your workspaces. Search, filter, or update tasks directly.
+          {t('global_view_desc')}
         </p>
       </div>
 
@@ -94,7 +94,7 @@ export const GlobalView: React.FC = () => {
         <div className="flex-1 w-full relative flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-slate-700 dark:text-slate-350 uppercase tracking-wider flex items-center gap-1">
             <Search size={12} />
-            Search
+            {t('search')}
           </label>
           <div className="relative">
             <input
@@ -134,7 +134,7 @@ export const GlobalView: React.FC = () => {
         <div className="overflow-x-auto">
           {filteredTasks.length === 0 ? (
             <div className="p-12 text-center text-slate-500 dark:text-slate-400 italic">
-              {t('no_tasks').replace('column', 'search query')}
+              {t('no_tasks_search')}
             </div>
           ) : (
             <table className="w-full border-collapse">
@@ -176,7 +176,7 @@ export const GlobalView: React.FC = () => {
                             <span className="truncate max-w-[120px]">{proj.name}</span>
                           </div>
                         ) : (
-                          <span className="italic text-slate-400">None</span>
+                          <span className="italic text-slate-400">{t('none')}</span>
                         )}
                       </td>
                       {/* Status Tag */}

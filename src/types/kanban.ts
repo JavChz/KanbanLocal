@@ -10,10 +10,16 @@ export interface Task {
   links?: string[];
 }
 
+export interface ProjectBackground {
+  type: 'theme' | 'solid' | 'image' | 'custom';
+  value: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   color: string; // Tailwind class identifier, e.g., 'blue-500'
+  background?: ProjectBackground;
 }
 
 export interface KanbanState {
@@ -31,7 +37,7 @@ export interface KanbanState {
   
   // Project Actions
   addProject: (name: string, color: string) => string;
-  updateProject: (id: string, name: string, color: string) => void;
+  updateProject: (id: string, name: string, color: string, background?: ProjectBackground) => void;
   deleteProject: (id: string) => void;
   
   // Settings / Globals

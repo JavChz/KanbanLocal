@@ -51,7 +51,7 @@ export const Column: React.FC<ColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[280px] max-w-sm flex flex-col rounded-2xl glass-panel p-4 transition-all duration-200 ${
+      className={`flex-1 min-w-[280px] max-w-sm flex flex-col rounded-2xl glass-panel p-4 transition-all duration-200 board-column ${
         isOver ? 'bg-slate-200/40 dark:bg-slate-800/20 scale-[1.005] ring-1 ring-blue-500/20' : ''
       }`}
     >

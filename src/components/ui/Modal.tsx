@@ -8,9 +8,17 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   overflowVisible?: boolean;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, overflowVisible }) => {
+export const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  overflowVisible,
+  size = 'md',
+}) => {
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -51,7 +59,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
       />
 
       {/* Modal Container */}
-      <div className={`relative w-full max-w-md glass-panel p-6 rounded-2xl shadow-2xl z-10 flex flex-col gap-4 animate-fade-in scale-100 max-h-[90vh] ${overflowVisible ? 'overflow-visible' : 'overflow-y-auto'}`}>
+      <div className={`relative w-full ${size === 'lg' ? 'max-w-2xl' : size === 'sm' ? 'max-w-sm' : 'max-w-md'} glass-panel p-6 rounded-2xl shadow-2xl z-10 flex flex-col gap-4 animate-fade-in scale-100 max-h-[90vh] ${overflowVisible ? 'overflow-visible' : 'overflow-y-auto'}`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/30 pb-3">
           {title ? (

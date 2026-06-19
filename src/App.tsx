@@ -5,7 +5,6 @@ import { RedirectGuard } from './components/Layout/RedirectGuard';
 import { HomeView } from './views/HomeView';
 import { BoardView } from './views/BoardView';
 import { GlobalView } from './views/GlobalView';
-import { SettingsView } from './views/SettingsView';
 import { useKanbanStore } from './store/useKanbanStore';
 import { useTranslation } from 'react-i18next';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -35,7 +34,6 @@ function App() {
             <Route path="/" element={<HomeView />} />
             <Route path="/project/:id" element={<BoardView />} />
             <Route path="/global" element={<GlobalView />} />
-            <Route path="/settings" element={<SettingsView />} />
           </Routes>
         </Layout>
       </RedirectGuard>

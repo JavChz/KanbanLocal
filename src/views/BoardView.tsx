@@ -22,7 +22,7 @@ import {
 import type { DragStartEvent, DragOverEvent } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useTranslation } from 'react-i18next';
-import { Edit, Trash2, Check, Archive, RotateCcw, ArchiveRestore } from 'lucide-react';
+import { Edit, Trash2, Check, Archive, ArchiveRestore } from 'lucide-react';
 import { getColorStyles } from '../utils/colors';
 import { BACKGROUND_IMAGES } from '../components/Layout/Layout';
 

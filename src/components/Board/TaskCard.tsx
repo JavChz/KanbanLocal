@@ -33,8 +33,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       {...attributes}
       {...listeners}
       onClick={(e) => {
+        console.log("TaskCard onClick triggered, transform:", transform);
         // Prevent click if we were dragging
         if (transform && (Math.abs(transform.x) > 3 || Math.abs(transform.y) > 3)) {
+          console.log("Click ignored due to dragging transform");
           return;
         }
         onClick(e);

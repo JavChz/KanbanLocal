@@ -4,7 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { Task, TaskStatus } from '../../types/kanban';
 import { TaskCard } from './TaskCard';
 import { AddTaskButton } from './AddTaskButton';
-import { Plus, Check, X } from 'lucide-react';
+import { Plus, Check, X, Archive } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface ColumnProps {
@@ -13,6 +13,7 @@ interface ColumnProps {
   tasks: Task[];
   onTaskClick: (task: Task, e: React.MouseEvent) => void;
   onAddTask: (title: string, status: TaskStatus, position?: 'top' | 'bottom') => void;
+  onArchiveAllDone?: () => void;
 }
 
 export const Column: React.FC<ColumnProps> = ({
@@ -21,6 +22,7 @@ export const Column: React.FC<ColumnProps> = ({
   tasks,
   onTaskClick,
   onAddTask,
+  onArchiveAllDone,
 }) => {
   const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id: status });
@@ -140,16 +142,27 @@ export const Column: React.FC<ColumnProps> = ({
             {tasks.length}
           </span>
         </div>
-        <button
-          onClick={() => {
-            setAddingPosition('top');
-            setIsAdding(true);
-          }}
-          className="p-1 rounded-md text-slate-400 hover:text-blue-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
-          title={t('add_task')}
-        >
-          <Plus size={16} />
-        </button>
+        <div className="flex items-center gap-1">
+          {status === 'DONE' && tasks.length > 0 && onArchiveAllDone && (
+            <button
+              onClick={onArchiveAllDone}
+              className="p-1 rounded-md text-slate-400 hover:text-amber-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+              title={t('archive_all_done')}
+            >
+              <Archive size={16} />
+            </button>
+          )}
+          <button
+            onClick={() => {
+              setAddingPosition('top');
+              setIsAdding(true);
+            }}
+            className="p-1 rounded-md text-slate-400 hover:text-blue-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+            title={t('add_task')}
+          >
+            <Plus size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Task List */}

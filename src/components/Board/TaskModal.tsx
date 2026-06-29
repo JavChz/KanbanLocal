@@ -7,7 +7,7 @@ import { Button } from '../ui/Button';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { Select } from '../ui/Select';
 import { useKanbanStore } from '../../store/useKanbanStore';
-import { Trash2, Plus, X, Link2, Tag, ExternalLink } from 'lucide-react';
+import { Trash2, Plus, X, Link2, Tag, ExternalLink, Archive, ArchiveRestore } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface TaskModalProps {
@@ -106,6 +106,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
     onClose();
   };
 
+  const handleArchive = () => {
+    updateTask(task.id, { archived: !task.archived });
+    onClose();
+  };
+
   const handleAddTag = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanTag = newTag.trim();
@@ -137,9 +142,40 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
     setLinks(links.filter((_, idx) => idx !== indexToRemove));
   };
 
+  const headerActions = (
+    <div className="flex items-center gap-1 mr-1">
+      <button
+        type="button"
+        onClick={handleArchive}
+        className={`p-1.5 rounded-lg transition-colors cursor-pointer flex items-center justify-center ${
+          task.archived
+            ? 'text-green-600 hover:bg-green-500/10 dark:text-green-400 dark:hover:bg-green-500/20'
+            : 'text-slate-400 hover:text-amber-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+        }`}
+        title={task.archived ? t('unarchive') : t('archive')}
+      >
+        {task.archived ? <ArchiveRestore size={16} /> : <Archive size={16} />}
+      </button>
+      <button
+        type="button"
+        onClick={handleDelete}
+        className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer flex items-center justify-center"
+        title={t('delete')}
+      >
+        <Trash2 size={16} />
+      </button>
+    </div>
+  );
+
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title={t('task_details')} style={modalStyle}>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={t('task_details')}
+        style={modalStyle}
+        headerActions={headerActions}
+      >
       <div ref={contentRef} className="flex flex-col gap-5 text-left">
         
         {/* Task Title */}
@@ -275,25 +311,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
         </div>
 
         {/* Modal Action Footer */}
-        <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-800/30">
-          <Button
-            type="button"
-            variant="danger"
-            onClick={handleDelete}
-            className="flex items-center gap-1.5"
-          >
-            <Trash2 size={14} />
-            {t('delete')}
+        <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-800/30">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            {t('cancel')}
           </Button>
-          
-          <div className="flex gap-2">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              {t('cancel')}
-            </Button>
-            <Button type="button" variant="primary" onClick={handleSave}>
-              {t('save')}
-            </Button>
-          </div>
+          <Button type="button" variant="primary" onClick={handleSave}>
+            {t('save')}
+          </Button>
         </div>
 
       </div>

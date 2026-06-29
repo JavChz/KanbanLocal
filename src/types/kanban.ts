@@ -9,6 +9,7 @@ export interface Task {
   tags?: string[];
   links?: string[];
   deadline?: string;       // Deadline date (YYYY-MM-DD)
+  archived?: boolean;      // Archiving status
 }
 
 export interface ProjectBackground {

@@ -60,6 +60,7 @@ export const createSettingsSlice: StateCreator<
             description: typeof t.description === 'string' ? t.description : undefined,
             tags: Array.isArray(t.tags) && t.tags.every((tag: unknown) => typeof tag === 'string') ? t.tags : [],
             links: Array.isArray(t.links) && t.links.every((l: unknown) => typeof l === 'string') ? t.links : [],
+            archived: typeof t.archived === 'boolean' ? t.archived : undefined,
           });
         }
       }

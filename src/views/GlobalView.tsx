@@ -36,6 +36,7 @@ export const GlobalView: React.FC = () => {
     { value: 'TODO', label: t('todo') },
     { value: 'IN_PROGRESS', label: t('in_progress') },
     { value: 'DONE', label: t('done') },
+    { value: 'ARCHIVED', label: t('archived') },
   ];
 
   // Project options for Select dropdown
@@ -50,7 +51,10 @@ export const GlobalView: React.FC = () => {
       task.title.toLowerCase().includes(search.toLowerCase()) ||
       (task.description || '').toLowerCase().includes(search.toLowerCase());
 
-    const matchesStatus = statusFilter === 'ALL' || task.status === statusFilter;
+    const matchesStatus =
+      statusFilter === 'ARCHIVED'
+        ? task.archived === true
+        : task.archived !== true && (statusFilter === 'ALL' || task.status === statusFilter);
 
     const matchesProject = projectFilter === 'ALL' || task.projectId === projectFilter;
 
@@ -62,7 +66,10 @@ export const GlobalView: React.FC = () => {
     setIsTaskModalOpen(true);
   };
 
-  const getStatusBadgeClass = (status: string) => {
+  const getStatusBadgeClass = (status: string, archived?: boolean) => {
+    if (archived) {
+      return 'bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400 border border-purple-500/25 dark:border-purple-900/20';
+    }
     switch (status) {
       case 'TODO':
         return 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/35';
@@ -75,7 +82,10 @@ export const GlobalView: React.FC = () => {
     }
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string, archived?: boolean) => {
+    if (archived) {
+      return t('archived');
+    }
     switch (status) {
       case 'TODO':
         return t('todo');
@@ -222,8 +232,8 @@ export const GlobalView: React.FC = () => {
                           </td>
                           {/* Status Tag */}
                           <td className="px-5 py-4">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-3xs font-bold uppercase border ${getStatusBadgeClass(task.status)}`}>
-                              {getStatusLabel(task.status)}
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-3xs font-bold uppercase border ${getStatusBadgeClass(task.status, task.archived)}`}>
+                              {getStatusLabel(task.status, task.archived)}
                             </span>
                           </td>
                           {/* Navigate to Project Task Link */}
@@ -315,8 +325,8 @@ export const GlobalView: React.FC = () => {
                           )}
 
                           <div className="flex justify-between items-center mt-1 pt-1 border-t border-slate-100/50 dark:border-slate-800/10">
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${getStatusBadgeClass(task.status)}`}>
-                              {getStatusLabel(task.status)}
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${getStatusBadgeClass(task.status, task.archived)}`}>
+                              {getStatusLabel(task.status, task.archived)}
                             </span>
                             {task.deadline && (
                               <span className="text-[9px] font-bold font-mono text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-900/60 px-1.5 py-0.5 rounded">

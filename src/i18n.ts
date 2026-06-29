@@ -119,6 +119,13 @@ const resources = {
       projects_view: "Projects View",
       open_in_project: "Open in Project Board",
       open_project: "Open Project Board",
+      archive: "Archive",
+      archived: "Archived",
+      unarchive: "Restore",
+      see_archive: "See Archive",
+      archive_title: "Project Archive",
+      no_archived_tasks: "No archived tasks in this project.",
+      archive_all_done: "Archive all done tasks",
     }
   },
   fr: {
@@ -238,6 +245,13 @@ const resources = {
       projects_view: "Vue Projets",
       open_in_project: "Ouvrir dans le tableau du projet",
       open_project: "Ouvrir le tableau du projet",
+      archive: "Archiver",
+      archived: "Archivé",
+      unarchive: "Restaurer",
+      see_archive: "Voir l'archive",
+      archive_title: "Archive du projet",
+      no_archived_tasks: "Aucune tâche archivée dans ce projet.",
+      archive_all_done: "Archiver toutes les tâches terminées",
     }
   },
   ja: {
@@ -357,6 +371,13 @@ const resources = {
       projects_view: "プロジェクト表示",
       open_in_project: "プロジェクトボードで開く",
       open_project: "プロジェクトボードを開く",
+      archive: "アーカイブ",
+      archived: "アーカイブ済み",
+      unarchive: "復元",
+      see_archive: "アーカイブを見る",
+      archive_title: "プロジェクトアーカイブ",
+      no_archived_tasks: "このプロジェクトにアーカイブされたタスクはありません。",
+      archive_all_done: "すべての完了タスクをアーカイブ",
     }
   },
   es: {
@@ -476,6 +497,13 @@ const resources = {
       projects_view: "Vista de Proyectos",
       open_in_project: "Abrir en el tablero del proyecto",
       open_project: "Abrir tablero del proyecto",
+      archive: "Archivar",
+      archived: "Archivado",
+      unarchive: "Restaurar",
+      see_archive: "Ver Archivo",
+      archive_title: "Archivo del Proyecto",
+      no_archived_tasks: "No hay tareas archivadas en este proyecto.",
+      archive_all_done: "Archivar todas las tareas hechas",
     }
   }
 };

@@ -10,6 +10,7 @@ interface ModalProps {
   overflowVisible?: boolean;
   size?: 'sm' | 'md' | 'lg';
   style?: React.CSSProperties;
+  headerActions?: React.ReactNode;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -20,6 +21,7 @@ export const Modal: React.FC<ModalProps> = ({
   overflowVisible,
   size = 'md',
   style,
+  headerActions,
 }) => {
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -71,13 +73,16 @@ export const Modal: React.FC<ModalProps> = ({
           ) : (
             <div />
           )}
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
-            aria-label="Close modal"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-1.5">
+            {headerActions}
+            <button
+              onClick={onClose}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}

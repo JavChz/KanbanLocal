@@ -64,7 +64,7 @@ export const HomeView: React.FC = () => {
     if (!proj.deadline) {
       return 'ACTIVE';
     }
-    const projTasks = tasks.filter((t) => t.projectId === proj.id);
+    const projTasks = tasks.filter((t) => t.projectId === proj.id && !t.archived);
     const hasUnfinishedTasks = projTasks.some((t) => t.status !== 'DONE') || projTasks.length === 0;
 
     const deadlineDate = new Date(proj.deadline + 'T23:59:59');
@@ -96,10 +96,11 @@ export const HomeView: React.FC = () => {
   };
 
   // Stats Calculations
-  const totalTasks = tasks.length;
-  const backlogTasks = tasks.filter((t) => t.status === 'TODO').length;
-  const inProgressTasks = tasks.filter((t) => t.status === 'IN_PROGRESS').length;
-  const completedTasks = tasks.filter((t) => t.status === 'DONE').length;
+  const activeTasks = tasks.filter((t) => !t.archived);
+  const totalTasks = activeTasks.length;
+  const backlogTasks = activeTasks.filter((t) => t.status === 'TODO').length;
+  const inProgressTasks = activeTasks.filter((t) => t.status === 'IN_PROGRESS').length;
+  const completedTasks = activeTasks.filter((t) => t.status === 'DONE').length;
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   return (
@@ -218,7 +219,7 @@ export const HomeView: React.FC = () => {
           {/* Render Active Projects */}
           {projects.map((proj) => {
             const colorStyles = getColorStyles(proj.color);
-            const projTasks = tasks.filter((t) => t.projectId === proj.id);
+            const projTasks = tasks.filter((t) => t.projectId === proj.id && !t.archived);
             const doneCount = projTasks.filter((t) => t.status === 'DONE').length;
             const projCompletionRate = projTasks.length > 0 ? Math.round((doneCount / projTasks.length) * 100) : 0;
             const bgConfig = proj.background;

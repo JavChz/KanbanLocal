@@ -22,7 +22,7 @@ import {
 import type { DragStartEvent, DragOverEvent } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useTranslation } from 'react-i18next';
-import { Edit, Trash2, Check } from 'lucide-react';
+import { Edit, Trash2, Check, Archive, RotateCcw, ArchiveRestore } from 'lucide-react';
 import { getColorStyles } from '../utils/colors';
 import { BACKGROUND_IMAGES } from '../components/Layout/Layout';
 
@@ -41,6 +41,8 @@ export const BoardView: React.FC = () => {
     moveAndReorderTask,
     updateProject,
     deleteProject,
+    updateTask,
+    deleteTask,
   } = useKanbanStore();
 
   const project = projects.find((p) => p.id === id);
@@ -52,6 +54,9 @@ export const BoardView: React.FC = () => {
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const [isDeleteTaskConfirmOpen, setIsDeleteTaskConfirmOpen] = useState(false);
 
   // Project Edit fields
   const [editName, setEditName] = useState('');
@@ -94,7 +99,7 @@ export const BoardView: React.FC = () => {
   if (!project || !id) return null;
 
   // Filter tasks for this project
-  const projectTasks = tasks.filter((t) => t.projectId === id);
+  const projectTasks = tasks.filter((t) => t.projectId === id && !t.archived);
 
   // Pre-open task modal if `task` query parameter is present
   useEffect(() => {
@@ -160,6 +165,13 @@ export const BoardView: React.FC = () => {
       links: [],
     }, position);
   };
+  
+  const handleArchiveAllDone = () => {
+    const doneTasks = tasks.filter((t) => t.projectId === id && t.status === 'DONE' && !t.archived);
+    doneTasks.forEach((t) => {
+      updateTask(t.id, { archived: true });
+    });
+  };
 
   const handleTaskClick = (task: Task, e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -218,15 +230,27 @@ export const BoardView: React.FC = () => {
           </h2>
         </div>
         
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => setIsEditProjectOpen(true)}
-          className="flex items-center gap-1.5"
-        >
-          <Edit size={14} />
-          {t('edit_project')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsArchiveOpen(true)}
+            className="flex items-center gap-1.5"
+          >
+            <Archive size={14} />
+            {t('see_archive')}
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsEditProjectOpen(true)}
+            className="flex items-center gap-1.5"
+          >
+            <Edit size={14} />
+            {t('edit_project')}
+          </Button>
+        </div>
       </div>
 
       {/* Board Drag and Drop Content */}
@@ -258,6 +282,7 @@ export const BoardView: React.FC = () => {
             tasks={tasksByStatus.DONE}
             onTaskClick={handleTaskClick}
             onAddTask={handleAddNewTask}
+            onArchiveAllDone={handleArchiveAllDone}
           />
         </div>
         {createPortal(
@@ -528,6 +553,96 @@ export const BoardView: React.FC = () => {
         onConfirm={handleConfirmDeleteProject}
         title={t('delete_project')}
         message={t('confirm_delete_project')}
+        confirmText={t('delete')}
+      />
+
+      {/* Project Archive Modal */}
+      <Modal
+        isOpen={isArchiveOpen}
+        onClose={() => setIsArchiveOpen(false)}
+        title={t('archive_title')}
+      >
+        <div className="flex flex-col gap-4 text-left max-h-[450px] overflow-y-auto pr-1">
+          {tasks.filter((t) => t.projectId === id && t.archived).length === 0 ? (
+            <div className="py-12 text-center text-slate-500 dark:text-slate-400 italic">
+              {t('no_archived_tasks')}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {tasks
+                .filter((t) => t.projectId === id && t.archived)
+                .map((task) => (
+                  <div
+                    key={task.id}
+                    className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-800/30 bg-slate-50/50 dark:bg-slate-900/30 hover:bg-slate-100/50 dark:hover:bg-slate-850/40 transition-colors"
+                  >
+                    <div
+                      className="flex-1 min-w-0 cursor-pointer"
+                      onClick={() => {
+                        setSelectedTask(task);
+                        setIsTaskModalOpen(true);
+                      }}
+                    >
+                      <span className="font-semibold text-sm text-slate-800 dark:text-slate-100 block truncate hover:text-blue-650 dark:hover:text-blue-400">
+                        {task.title}
+                      </span>
+                      {task.description && (
+                        <span className="text-xs text-slate-550 dark:text-slate-400 block truncate mt-0.5">
+                          {task.description}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => updateTask(task.id, { archived: false })}
+                        className="flex items-center gap-1 hover:text-green-600 dark:hover:text-green-400"
+                        title={t('unarchive')}
+                      >
+                        <ArchiveRestore size={12} />
+                        <span className="hidden sm:inline text-2xs">{t('unarchive')}</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        onClick={() => {
+                          setTaskToDelete(task.id);
+                          setIsDeleteTaskConfirmOpen(true);
+                        }}
+                        className="flex items-center gap-1"
+                        title={t('delete')}
+                      >
+                        <Trash2 size={12} />
+                        <span className="hidden sm:inline text-2xs">{t('delete')}</span>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Delete Task Confirmation Modal from Archive */}
+      <ConfirmModal
+        isOpen={isDeleteTaskConfirmOpen}
+        onClose={() => {
+          setIsDeleteTaskConfirmOpen(false);
+          setTaskToDelete(null);
+        }}
+        onConfirm={() => {
+          if (taskToDelete) {
+            deleteTask(taskToDelete);
+            setTaskToDelete(null);
+          }
+          setIsDeleteTaskConfirmOpen(false);
+        }}
+        title={t('delete')}
+        message={t('confirm_delete_task')}
         confirmText={t('delete')}
       />
 

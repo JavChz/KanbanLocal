@@ -519,7 +519,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </div>
               <p>{t('about_desc')}</p>
               <div className="border-t border-slate-200/50 dark:border-slate-800/30 pt-3 flex justify-between items-center text-xs">
-                <span className="font-semibold text-slate-600 dark:text-slate-400 font-sans">{t('created_by')}</span>
+                <span className="font-semibold text-slate-600 dark:text-slate-400 font-sans">{t('created_by')} Javier Garcia Chavez: </span>
                 <div className="flex gap-3">
                   <a
                     href="https://unsplash.com/@javchz"

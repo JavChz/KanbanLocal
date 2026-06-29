@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { Task } from '../../types/kanban';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
@@ -13,9 +13,10 @@ interface TaskModalProps {
   task: Task | null;
   isOpen: boolean;
   onClose: () => void;
+  clickedTaskRect?: { top: number; left: number; width: number; height: number } | null;
 }
 
-export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
+export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, clickedTaskRect }) => {
   const { t } = useTranslation();
   const { updateTask, deleteTask } = useKanbanStore();
 
@@ -28,6 +29,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose }) =
   const [newLink, setNewLink] = useState('');
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
+  const [modalStyle, setModalStyle] = useState<React.CSSProperties | undefined>(undefined);
+  const contentRef = useRef<HTMLDivElement>(null);
+
   // Populate state when task is loaded
   useEffect(() => {
     if (task) {
@@ -37,6 +41,41 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose }) =
       setLinks(task.links || []);
     }
   }, [task, isOpen]);
+
+  useEffect(() => {
+    if (isOpen && clickedTaskRect && contentRef.current) {
+      const estimatedHeight = contentRef.current.offsetHeight + 80;
+      const estimatedWidth = Math.max(340, clickedTaskRect.width);
+
+      let top = clickedTaskRect.top;
+      let left = clickedTaskRect.left;
+
+      if (left + estimatedWidth > window.innerWidth) {
+        left = window.innerWidth - estimatedWidth - 16;
+      }
+      if (left < 16) {
+        left = 16;
+      }
+
+      if (top + estimatedHeight > window.innerHeight) {
+        top = window.innerHeight - estimatedHeight - 16;
+      }
+      if (top < 16) {
+        top = 16;
+      }
+
+      setModalStyle({
+        position: 'fixed',
+        top: `${top}px`,
+        left: `${left}px`,
+        width: `${estimatedWidth}px`,
+        maxWidth: 'none',
+        margin: 0,
+      });
+    } else {
+      setModalStyle(undefined);
+    }
+  }, [isOpen, clickedTaskRect, task, tags, links]);
 
   if (!task) return null;
 
@@ -93,8 +132,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose }) =
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title={t('task_details')}>
-      <div className="flex flex-col gap-5 text-left">
+      <Modal isOpen={isOpen} onClose={onClose} title={t('task_details')} style={modalStyle}>
+      <div ref={contentRef} className="flex flex-col gap-5 text-left">
         
         {/* Task Title */}
         <Input
@@ -102,6 +141,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose }) =
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={t('task_title')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleSave();
+            }
+          }}
+          autoFocus
           required
         />
 
@@ -111,6 +157,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose }) =
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder={t('task_description')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault();
+              handleSave();
+            }
+          }}
           rows={4}
         />
 

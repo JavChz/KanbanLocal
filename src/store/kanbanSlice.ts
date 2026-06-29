@@ -4,7 +4,7 @@ import type { KanbanState, Task, Project, TaskStatus, ProjectBackground } from '
 export interface KanbanSlice {
   tasks: Task[];
   projects: Project[];
-  addTask: (task: Omit<Task, 'id'>) => void;
+  addTask: (task: Omit<Task, 'id'>, position?: 'top' | 'bottom') => void;
   updateTask: (id: string, updatedFields: Partial<Omit<Task, 'id' | 'projectId'>>) => void;
   deleteTask: (id: string) => void;
   moveTask: (id: string, newStatus: TaskStatus) => void;
@@ -24,14 +24,27 @@ export const createKanbanSlice: StateCreator<
   tasks: [],
   projects: [],
 
-  addTask: (taskData) => {
+  addTask: (taskData, position = 'bottom') => {
     const newTask: Task = {
       ...taskData,
       id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 11),
     };
-    set((state) => ({
-      tasks: [...state.tasks, newTask],
-    }));
+    set((state) => {
+      if (position === 'top') {
+        const firstMatchingIndex = state.tasks.findIndex(
+          (t) => t.projectId === taskData.projectId && t.status === taskData.status
+        );
+        if (firstMatchingIndex !== -1) {
+          const newTasks = [...state.tasks];
+          newTasks.splice(firstMatchingIndex, 0, newTask);
+          return { tasks: newTasks };
+        } else {
+          return { tasks: [newTask, ...state.tasks] };
+        }
+      } else {
+        return { tasks: [...state.tasks, newTask] };
+      }
+    });
   },
 
   updateTask: (id, updatedFields) => {

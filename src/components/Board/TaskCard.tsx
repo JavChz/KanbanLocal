@@ -5,7 +5,7 @@ import type { Task } from '../../types/kanban';
 
 interface TaskCardProps {
   task: Task;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
@@ -31,12 +31,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       style={style}
       {...attributes}
       {...listeners}
-      onClick={() => {
+      onClick={(e) => {
         // Prevent click if we were dragging
         if (transform && (Math.abs(transform.x) > 3 || Math.abs(transform.y) > 3)) {
           return;
         }
-        onClick();
+        onClick(e);
       }}
       className={`glass-card p-4.5 rounded-xl cursor-pointer text-sm font-medium text-slate-800 dark:text-slate-100 flex items-center justify-between select-none active:cursor-grabbing ${
         isDragging ? 'shadow-md border-blue-500/50 scale-[1.01]' : ''

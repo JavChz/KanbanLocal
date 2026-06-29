@@ -9,6 +9,7 @@ interface ModalProps {
   children: React.ReactNode;
   overflowVisible?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  style?: React.CSSProperties;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -18,6 +19,7 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   overflowVisible,
   size = 'md',
+  style,
 }) => {
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -59,7 +61,7 @@ export const Modal: React.FC<ModalProps> = ({
       />
 
       {/* Modal Container */}
-      <div className={`relative w-full ${size === 'lg' ? 'max-w-2xl' : size === 'sm' ? 'max-w-sm' : 'max-w-md'} glass-panel p-6 rounded-2xl shadow-2xl z-10 flex flex-col gap-4 animate-fade-in scale-100 max-h-[90vh] ${overflowVisible ? 'overflow-visible' : 'overflow-y-auto'}`}>
+      <div style={style} className={`relative w-full ${size === 'lg' ? 'max-w-2xl' : size === 'sm' ? 'max-w-sm' : 'max-w-md'} glass-panel p-6 rounded-2xl shadow-2xl z-10 flex flex-col gap-4 animate-fade-in scale-100 max-h-[90vh] ${overflowVisible ? 'overflow-visible' : 'overflow-y-auto'}`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/30 pb-3">
           {title ? (

@@ -5,7 +5,7 @@ export interface KanbanSlice {
   tasks: Task[];
   projects: Project[];
   addTask: (task: Omit<Task, 'id'>, position?: 'top' | 'bottom') => void;
-  updateTask: (id: string, updatedFields: Partial<Omit<Task, 'id' | 'projectId'>>) => void;
+  updateTask: (id: string, updatedFields: Partial<Omit<Task, 'id'>>) => void;
   deleteTask: (id: string) => void;
   moveTask: (id: string, newStatus: TaskStatus) => void;
   reorderTasks: (projectId: string, tasks: Task[]) => void;
@@ -62,10 +62,15 @@ export const createKanbanSlice: StateCreator<
   updateTask: (id, updatedFields) => {
     set((state) => {
       const task = state.tasks.find((t) => t.id === id);
-      const projectId = task?.projectId;
-      const updatedProjects = projectId
-        ? state.projects.map((p) => (p.id === projectId ? { ...p, updatedAt: Date.now() } : p))
-        : state.projects;
+      const oldProjectId = task?.projectId;
+      const newProjectId = updatedFields.projectId;
+
+      const updatedProjects = state.projects.map((p) => {
+        if (p.id === oldProjectId || (newProjectId && p.id === newProjectId)) {
+          return { ...p, updatedAt: Date.now() };
+        }
+        return p;
+      });
 
       return {
         tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updatedFields } : t)),

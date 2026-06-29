@@ -34,7 +34,7 @@ export interface KanbanState {
   lastOpenedProject: string | null;
   // Core Actions
   addTask: (task: Omit<Task, 'id'>, position?: 'top' | 'bottom') => void;
-  updateTask: (id: string, updatedFields: Partial<Omit<Task, 'id' | 'projectId'>>) => void;
+  updateTask: (id: string, updatedFields: Partial<Omit<Task, 'id'>>) => void;
   deleteTask: (id: string) => void;
   moveTask: (id: string, newStatus: TaskStatus) => void;
   reorderTasks: (projectId: string, tasks: Task[]) => void;

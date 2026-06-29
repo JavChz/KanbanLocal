@@ -115,6 +115,10 @@ const resources = {
       description_label: "Description / Subtitle",
       description_placeholder: "e.g., Current Focus",
       no_deadline: "No deadline",
+      list_view: "List View",
+      projects_view: "Projects View",
+      open_in_project: "Open in Project Board",
+      open_project: "Open Project Board",
     }
   },
   fr: {
@@ -230,6 +234,10 @@ const resources = {
       description_label: "Description / Sous-titre",
       description_placeholder: "ex., Objectif principal",
       no_deadline: "Pas de date limite",
+      list_view: "Vue Liste",
+      projects_view: "Vue Projets",
+      open_in_project: "Ouvrir dans le tableau du projet",
+      open_project: "Ouvrir le tableau du projet",
     }
   },
   ja: {
@@ -345,6 +353,10 @@ const resources = {
       description_label: "説明 / サブタイトル",
       description_placeholder: "例：現在のフォーカス",
       no_deadline: "期限なし",
+      list_view: "リスト表示",
+      projects_view: "プロジェクト表示",
+      open_in_project: "プロジェクトボードで開く",
+      open_project: "プロジェクトボードを開く",
     }
   },
   es: {
@@ -460,6 +472,10 @@ const resources = {
       description_label: "Descripción / Subtítulo",
       description_placeholder: "ej., Enfoque actual",
       no_deadline: "Sin fecha límite",
+      list_view: "Vista de Lista",
+      projects_view: "Vista de Proyectos",
+      open_in_project: "Abrir en el tablero del proyecto",
+      open_project: "Abrir tablero del proyecto",
     }
   }
 };

@@ -5,6 +5,7 @@ import { Input } from '../ui/Input';
 import { Textarea } from '../ui/Textarea';
 import { Button } from '../ui/Button';
 import { ConfirmModal } from '../ui/ConfirmModal';
+import { Select } from '../ui/Select';
 import { useKanbanStore } from '../../store/useKanbanStore';
 import { Trash2, Plus, X, Link2, Tag, ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -18,10 +19,11 @@ interface TaskModalProps {
 
 export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, clickedTaskRect }) => {
   const { t } = useTranslation();
-  const { updateTask, deleteTask } = useKanbanStore();
+  const { updateTask, deleteTask, projects } = useKanbanStore();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [projectId, setProjectId] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [links, setLinks] = useState<string[]>([]);
   const [deadline, setDeadline] = useState('');
@@ -41,6 +43,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
       setTags(task.tags || []);
       setLinks(task.links || []);
       setDeadline(task.deadline || '');
+      setProjectId(task.projectId || '');
     }
   }, [task, isOpen]);
 
@@ -89,6 +92,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
       tags,
       links,
       deadline: deadline.trim() || undefined,
+      projectId,
     });
     onClose();
   };
@@ -167,6 +171,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
             }
           }}
           rows={4}
+        />
+
+        {/* Project Selection */}
+        <Select
+          label={t('project')}
+          value={projectId}
+          onChange={(e) => setProjectId(e.target.value)}
+          options={projects.map((p) => ({
+            value: p.id,
+            label: p.name,
+          }))}
         />
 
         {/* Task Deadline */}

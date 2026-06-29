@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useKanbanStore } from '../store/useKanbanStore';
 import type { Task, TaskStatus } from '../types/kanban';
 import { Column } from '../components/Board/Column';
@@ -29,6 +29,7 @@ import { BACKGROUND_IMAGES } from '../components/Layout/Layout';
 export const BoardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
 
   const {
@@ -94,6 +95,18 @@ export const BoardView: React.FC = () => {
 
   // Filter tasks for this project
   const projectTasks = tasks.filter((t) => t.projectId === id);
+
+  // Pre-open task modal if `task` query parameter is present
+  useEffect(() => {
+    const taskIdParam = searchParams.get('task');
+    if (taskIdParam && projectTasks.length > 0) {
+      const taskToOpen = projectTasks.find((t) => t.id === taskIdParam);
+      if (taskToOpen) {
+        setSelectedTask(taskToOpen);
+        setIsTaskModalOpen(true);
+      }
+    }
+  }, [searchParams, projectTasks]);
 
   // Group tasks by status
   const tasksByStatus = {
@@ -268,6 +281,11 @@ export const BoardView: React.FC = () => {
           setIsTaskModalOpen(false);
           setSelectedTask(null);
           setClickedTaskRect(null);
+          if (searchParams.has('task')) {
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete('task');
+            setSearchParams(newParams, { replace: true });
+          }
         }}
       />
 

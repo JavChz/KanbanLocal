@@ -24,6 +24,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [links, setLinks] = useState<string[]>([]);
+  const [deadline, setDeadline] = useState('');
 
   const [newTag, setNewTag] = useState('');
   const [newLink, setNewLink] = useState('');
@@ -39,6 +40,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
       setDescription(task.description || '');
       setTags(task.tags || []);
       setLinks(task.links || []);
+      setDeadline(task.deadline || '');
     }
   }, [task, isOpen]);
 
@@ -86,6 +88,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
       description: description.trim(),
       tags,
       links,
+      deadline: deadline.trim() || undefined,
     });
     onClose();
   };
@@ -164,6 +167,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
             }
           }}
           rows={4}
+        />
+
+        {/* Task Deadline */}
+        <Input
+          label={t('deadline') || 'Deadline'}
+          type="date"
+          value={deadline}
+          onChange={(e) => setDeadline(e.target.value)}
         />
 
         {/* Tags Section */}

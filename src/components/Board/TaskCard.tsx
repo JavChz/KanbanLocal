@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Clock } from 'lucide-react';
 import type { Task } from '../../types/kanban';
 
 interface TaskCardProps {
@@ -38,11 +39,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         }
         onClick(e);
       }}
-      className={`glass-card p-4.5 rounded-xl cursor-pointer text-sm font-medium text-slate-800 dark:text-slate-100 flex items-center justify-between select-none active:cursor-grabbing ${
+      className={`glass-card p-4.5 rounded-xl cursor-pointer text-sm font-medium text-slate-800 dark:text-slate-100 flex flex-col items-start gap-2 select-none active:cursor-grabbing ${
         isDragging ? 'shadow-md border-blue-500/50 scale-[1.01]' : ''
       }`}
     >
-      <span className="truncate pr-2">{task.title}</span>
+      <span className="text-left w-full break-words pr-2">{task.title}</span>
+      {task.deadline && (
+        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-bold font-mono bg-slate-100 dark:bg-slate-900/60 px-1.5 py-0.5 rounded">
+          <Clock size={11} className="text-slate-400 dark:text-slate-500" />
+          <span>{task.deadline}</span>
+        </div>
+      )}
     </div>
   );
 };

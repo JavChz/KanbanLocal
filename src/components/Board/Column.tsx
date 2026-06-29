@@ -3,6 +3,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { Task, TaskStatus } from '../../types/kanban';
 import { TaskCard } from './TaskCard';
+import { AddTaskButton } from './AddTaskButton';
 import { Plus, Check, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -167,36 +168,13 @@ export const Column: React.FC<ColumnProps> = ({
         {/* Inline Task Form (Bottom) */}
         {isAdding && addingPosition === 'bottom' && renderForm()}
 
-        {tasks.length === 0 && !isAdding ? (
-          <button
-            type="button"
+        {!isAdding && (
+          <AddTaskButton
             onClick={() => {
               setAddingPosition('bottom');
               setIsAdding(true);
             }}
-            className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-400 rounded-xl p-6 select-none cursor-pointer hover:bg-slate-200/20 dark:hover:bg-slate-900/10 group transition-all duration-200 min-h-[150px]"
-          >
-            <Plus size={18} className="text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors mb-1.5" />
-            <span className="text-xs text-slate-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors italic text-center">
-              {t('no_tasks')}
-            </span>
-          </button>
-        ) : (
-          (isAdding || tasks.length > 0) && (
-            <button
-              type="button"
-              onClick={() => {
-                setAddingPosition('bottom');
-                setIsAdding(true);
-              }}
-              className="flex items-center justify-center gap-2 border border-dashed border-slate-300 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-400 rounded-xl p-3 select-none cursor-pointer hover:bg-slate-200/20 dark:hover:bg-slate-900/10 group transition-all duration-200 w-full min-h-[44px]"
-            >
-              <Plus size={14} className="text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
-              <span className="text-xs text-slate-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors italic text-center">
-                {t('add_task')}
-              </span>
-            </button>
-          )
+          />
         )}
       </div>
     </div>

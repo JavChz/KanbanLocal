@@ -10,8 +10,16 @@ export interface KanbanSlice {
   moveTask: (id: string, newStatus: TaskStatus) => void;
   reorderTasks: (projectId: string, tasks: Task[]) => void;
   moveAndReorderTask: (activeId: string, overId: string, projectId: string) => void;
-  addProject: (name: string, color: string) => string;
-  updateProject: (id: string, name: string, color: string, background?: ProjectBackground) => void;
+  addProject: (name: string, color: string, customId?: string, description?: string, deadline?: string) => string;
+  updateProject: (
+    id: string,
+    name: string,
+    color: string,
+    background?: ProjectBackground,
+    customId?: string,
+    description?: string,
+    deadline?: string
+  ) => void;
   deleteProject: (id: string) => void;
 }
 
@@ -30,6 +38,10 @@ export const createKanbanSlice: StateCreator<
       id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 11),
     };
     set((state) => {
+      const updatedProjects = state.projects.map((p) =>
+        p.id === taskData.projectId ? { ...p, updatedAt: Date.now() } : p
+      );
+
       if (position === 'top') {
         const firstMatchingIndex = state.tasks.findIndex(
           (t) => t.projectId === taskData.projectId && t.status === taskData.status
@@ -37,39 +49,70 @@ export const createKanbanSlice: StateCreator<
         if (firstMatchingIndex !== -1) {
           const newTasks = [...state.tasks];
           newTasks.splice(firstMatchingIndex, 0, newTask);
-          return { tasks: newTasks };
+          return { tasks: newTasks, projects: updatedProjects };
         } else {
-          return { tasks: [newTask, ...state.tasks] };
+          return { tasks: [newTask, ...state.tasks], projects: updatedProjects };
         }
       } else {
-        return { tasks: [...state.tasks, newTask] };
+        return { tasks: [...state.tasks, newTask], projects: updatedProjects };
       }
     });
   },
 
   updateTask: (id, updatedFields) => {
-    set((state) => ({
-      tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updatedFields } : t)),
-    }));
+    set((state) => {
+      const task = state.tasks.find((t) => t.id === id);
+      const projectId = task?.projectId;
+      const updatedProjects = projectId
+        ? state.projects.map((p) => (p.id === projectId ? { ...p, updatedAt: Date.now() } : p))
+        : state.projects;
+
+      return {
+        tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updatedFields } : t)),
+        projects: updatedProjects,
+      };
+    });
   },
 
   deleteTask: (id) => {
-    set((state) => ({
-      tasks: state.tasks.filter((t) => t.id !== id),
-    }));
+    set((state) => {
+      const task = state.tasks.find((t) => t.id === id);
+      const projectId = task?.projectId;
+      const updatedProjects = projectId
+        ? state.projects.map((p) => (p.id === projectId ? { ...p, updatedAt: Date.now() } : p))
+        : state.projects;
+
+      return {
+        tasks: state.tasks.filter((t) => t.id !== id),
+        projects: updatedProjects,
+      };
+    });
   },
 
   moveTask: (id, newStatus) => {
-    set((state) => ({
-      tasks: state.tasks.map((t) => (t.id === id ? { ...t, status: newStatus } : t)),
-    }));
+    set((state) => {
+      const task = state.tasks.find((t) => t.id === id);
+      const projectId = task?.projectId;
+      const updatedProjects = projectId
+        ? state.projects.map((p) => (p.id === projectId ? { ...p, updatedAt: Date.now() } : p))
+        : state.projects;
+
+      return {
+        tasks: state.tasks.map((t) => (t.id === id ? { ...t, status: newStatus } : t)),
+        projects: updatedProjects,
+      };
+    });
   },
 
   reorderTasks: (projectId, reorderedTasks) => {
     set((state) => {
       const otherTasks = state.tasks.filter((t) => t.projectId !== projectId);
+      const updatedProjects = state.projects.map((p) =>
+        p.id === projectId ? { ...p, updatedAt: Date.now() } : p
+      );
       return {
         tasks: [...otherTasks, ...reorderedTasks],
+        projects: updatedProjects,
       };
     });
   },
@@ -81,6 +124,9 @@ export const createKanbanSlice: StateCreator<
 
       const isOverColumn = overId === 'TODO' || overId === 'IN_PROGRESS' || overId === 'DONE';
       let updatedTasks = [...state.tasks];
+      const updatedProjects = state.projects.map((p) =>
+        p.id === projectId ? { ...p, updatedAt: Date.now() } : p
+      );
 
       if (isOverColumn) {
         const newStatus = overId as TaskStatus;
@@ -112,13 +158,21 @@ export const createKanbanSlice: StateCreator<
         }
       }
 
-      return { tasks: updatedTasks };
+      return { tasks: updatedTasks, projects: updatedProjects };
     });
   },
 
-  addProject: (name, color) => {
+  addProject: (name, color, customId, description, deadline) => {
     const id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 11);
-    const newProject: Project = { id, name, color };
+    const newProject: Project = {
+      id,
+      name,
+      color,
+      customId,
+      description,
+      deadline,
+      updatedAt: Date.now(),
+    };
     set((state) => ({
       projects: [...state.projects, newProject],
       lastOpenedProject: id,
@@ -126,9 +180,22 @@ export const createKanbanSlice: StateCreator<
     return id;
   },
 
-  updateProject: (id, name, color, background) => {
+  updateProject: (id, name, color, background, customId, description, deadline) => {
     set((state) => ({
-      projects: state.projects.map((p) => (p.id === id ? { ...p, name, color, background } : p)),
+      projects: state.projects.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              name,
+              color,
+              background,
+              customId,
+              description,
+              deadline,
+              updatedAt: Date.now(),
+            }
+          : p
+      ),
     }));
   },
 

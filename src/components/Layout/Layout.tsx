@@ -55,23 +55,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (activeProject && bgConfig && bgConfig.type !== 'theme') {
       if (bgConfig.type === 'solid') {
         document.body.style.backgroundColor = bgConfig.value;
-        document.body.style.backgroundImage = 'none';
-      } else if (bgConfig.type === 'image') {
-        const imgUrl = BACKGROUND_IMAGES[bgConfig.value];
+        document.body.style.removeProperty('--body-bg-image');
+      } else {
+        document.body.style.backgroundColor = '';
+        const imgUrl = bgConfig.type === 'image' 
+          ? BACKGROUND_IMAGES[bgConfig.value] 
+          : bgConfig.value;
         if (imgUrl) {
-          document.body.style.backgroundImage = `url(${imgUrl})`;
-          document.body.style.backgroundSize = 'cover';
-          document.body.style.backgroundPosition = 'center';
-          document.body.style.backgroundAttachment = 'fixed';
-          document.body.style.backgroundRepeat = 'no-repeat';
+          document.body.style.setProperty('--body-bg-image', `url(${imgUrl})`);
+        } else {
+          document.body.style.removeProperty('--body-bg-image');
         }
-      } else if (bgConfig.type === 'custom' && bgConfig.value) {
-        document.body.style.backgroundImage = `url(${bgConfig.value})`;
-        document.body.style.backgroundSize = 'cover';
-        document.body.style.backgroundPosition = 'center';
-        document.body.style.backgroundAttachment = 'fixed';
-        document.body.style.backgroundRepeat = 'no-repeat';
       }
+      
+      // Always keep body background image clear as we now render it via body::before
+      document.body.style.backgroundImage = 'none';
 
       if (isBgImage) {
         document.body.classList.add('has-bg-image');
@@ -83,20 +81,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     } else {
       document.body.style.backgroundColor = '';
       document.body.style.backgroundImage = '';
-      document.body.style.backgroundSize = '';
-      document.body.style.backgroundPosition = '';
-      document.body.style.backgroundAttachment = '';
-      document.body.style.backgroundRepeat = '';
+      document.body.style.removeProperty('--body-bg-image');
       document.body.classList.remove('has-bg-image', 'has-bg-solid');
     }
 
     return () => {
       document.body.style.backgroundColor = '';
       document.body.style.backgroundImage = '';
-      document.body.style.backgroundSize = '';
-      document.body.style.backgroundPosition = '';
-      document.body.style.backgroundAttachment = '';
-      document.body.style.backgroundRepeat = '';
+      document.body.style.removeProperty('--body-bg-image');
       document.body.classList.remove('has-bg-image', 'has-bg-solid');
     };
   }, [activeProject, projects, location.pathname]);

@@ -57,6 +57,9 @@ export const BoardView: React.FC = () => {
   const [editColor, setEditColor] = useState('blue-500');
   const [editBgType, setEditBgType] = useState<'theme' | 'solid' | 'image' | 'custom'>('theme');
   const [editBgValue, setEditBgValue] = useState('');
+  const [editCustomId, setEditCustomId] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editDeadline, setEditDeadline] = useState('');
 
   // Update lastOpenedProject on mount/id change
   useEffect(() => {
@@ -66,6 +69,9 @@ export const BoardView: React.FC = () => {
       setEditColor(project.color);
       setEditBgType(project.background?.type || 'theme');
       setEditBgValue(project.background?.value || '');
+      setEditCustomId(project.customId || '');
+      setEditDescription(project.description || '');
+      setEditDeadline(project.deadline || '');
     } else if (id && !project) {
       // If project doesn't exist, reset last opened and redirect to home
       setLastOpenedProject(null);
@@ -156,7 +162,15 @@ export const BoardView: React.FC = () => {
 
   const handleSaveProjectDetails = () => {
     if (!editName.trim()) return;
-    updateProject(id, editName.trim(), editColor, { type: editBgType, value: editBgValue });
+    updateProject(
+      id,
+      editName.trim(),
+      editColor,
+      { type: editBgType, value: editBgValue },
+      editCustomId.trim() || undefined,
+      editDescription.trim() || undefined,
+      editDeadline.trim() || undefined
+    );
     setIsEditProjectOpen(false);
   };
 
@@ -280,6 +294,28 @@ export const BoardView: React.FC = () => {
               onChange={setEditColor}
             />
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label={t('board_id') || 'Board ID / Code'}
+              value={editCustomId}
+              onChange={(e) => setEditCustomId(e.target.value)}
+              placeholder={t('board_id_placeholder') || 'e.g., WRK-001-ALPHA'}
+            />
+            <Input
+              label={t('deadline') || 'Deadline'}
+              type="date"
+              value={editDeadline}
+              onChange={(e) => setEditDeadline(e.target.value)}
+            />
+          </div>
+
+          <Input
+            label={t('description_label') || 'Description / Subtitle'}
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            placeholder={t('description_placeholder') || 'e.g., Current Focus'}
+          />
 
           {/* Background Selection Section */}
           <div className="flex flex-col gap-3.5 pt-3 border-t border-slate-200/50 dark:border-slate-800/30">

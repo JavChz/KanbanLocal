@@ -161,6 +161,35 @@ html.dark .board-header-glass::before {
   background: rgba(15, 23, 42, 0.75);
 }
 
+body.has-bg-image::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image: var(--body-bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  opacity: 0.8; /* Stronger visibility */
+  pointer-events: none;
+}
+
+body.has-bg-image::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: rgba(248, 250, 252, 0.1);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  pointer-events: none;
+}
+
+html.dark body.has-bg-image::after {
+  background-color: rgba(15, 23, 42, 0.3);
+}
+
 .has-bg-image .board-column {
   position: relative;
   background: transparent !important;
@@ -174,7 +203,7 @@ html.dark .board-header-glass::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.6) !important;
+  background: rgba(248, 250, 252, 0.88) !important;
   backdrop-filter: blur(25px) saturate(120%) !important;
   -webkit-backdrop-filter: blur(25px) saturate(120%) !important;
   border-radius: inherit;
@@ -189,7 +218,7 @@ html.dark .has-bg-image .board-column {
 }
 
 html.dark .has-bg-image .board-column::before {
-  background: rgba(15, 23, 42, 0.75) !important;
+  background: rgba(15, 23, 42, 0.92) !important;
 }
 
 .has-bg-image .glass-card {

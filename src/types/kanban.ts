@@ -8,6 +8,7 @@ export interface Task {
   description?: string;
   tags?: string[];
   links?: string[];
+  deadline?: string;       // Deadline date (YYYY-MM-DD)
 }
 
 export interface ProjectBackground {
@@ -20,6 +21,10 @@ export interface Project {
   name: string;
   color: string; // Tailwind class identifier, e.g., 'blue-500'
   background?: ProjectBackground;
+  customId?: string;       // Custom project board ID/key
+  description?: string;    // Subtitle / description of focus
+  deadline?: string;       // Deadline date (YYYY-MM-DD)
+  updatedAt?: number;      // Timestamp of last modification
 }
 
 export interface KanbanState {
@@ -36,8 +41,16 @@ export interface KanbanState {
   moveAndReorderTask: (activeId: string, overId: string, projectId: string) => void;
   
   // Project Actions
-  addProject: (name: string, color: string) => string;
-  updateProject: (id: string, name: string, color: string, background?: ProjectBackground) => void;
+  addProject: (name: string, color: string, customId?: string, description?: string, deadline?: string) => string;
+  updateProject: (
+    id: string,
+    name: string,
+    color: string,
+    background?: ProjectBackground,
+    customId?: string,
+    description?: string,
+    deadline?: string
+  ) => void;
   deleteProject: (id: string) => void;
   
   // Settings / Globals

@@ -1,16 +1,23 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 interface AppLogoProps {
   size?: number;
   className?: string;
+  style?: React.CSSProperties;
   variant?: 'badge' | 'glyph';
+  accentColor?: string;
 }
 
 export const AppLogo: React.FC<AppLogoProps> = ({
   size = 24,
   className = '',
+  style,
   variant = 'badge',
+  accentColor,
 }) => {
+  const reactId = useId();
+  const gradId = `kl-logo-grad-${reactId.replace(/[^a-zA-Z0-9-_]/g, '')}`;
+
   if (variant === 'glyph') {
     return (
       <svg
@@ -18,8 +25,9 @@ export const AppLogo: React.FC<AppLogoProps> = ({
         viewBox="0 0 32 32"
         width={size}
         height={size}
-        fill="currentColor"
+        fill={accentColor || 'currentColor'}
         className={className}
+        style={style}
         aria-hidden="true"
       >
         {/* Column 1: Vertical spine of the K (2 cards) */}
@@ -39,6 +47,15 @@ export const AppLogo: React.FC<AppLogoProps> = ({
     );
   }
 
+  // Default color palette is a warm greige (stone / titanium) hue rather than purple
+  const stop0 = accentColor
+    ? `color-mix(in srgb, ${accentColor} 85%, white)`
+    : '#68625d';
+  const stop50 = accentColor || '#44403c';
+  const stop100 = accentColor
+    ? `color-mix(in srgb, ${accentColor} 75%, black)`
+    : '#262423';
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -47,19 +64,20 @@ export const AppLogo: React.FC<AppLogoProps> = ({
       height={size}
       fill="none"
       className={className}
+      style={style}
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id="kl-logo-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#6366f1" />
-          <stop offset="50%" stopColor="#4f46e5" />
-          <stop offset="100%" stopColor="#7c3aed" />
+        <linearGradient id={gradId} x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={stop0} />
+          <stop offset="50%" stopColor={stop50} />
+          <stop offset="100%" stopColor={stop100} />
         </linearGradient>
       </defs>
 
-      {/* Modern squircle badge container */}
-      <rect width="32" height="32" rx="7.5" fill="url(#kl-logo-grad)" />
-      <rect x="0.5" y="0.5" width="31" height="31" rx="7" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+      {/* Crisp square exterior container (no rounded corners) */}
+      <rect width="32" height="32" fill={`url(#${gradId})`} />
+      <rect x="0.5" y="0.5" width="31" height="31" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
 
       {/* Column 1: Vertical spine of the K (2 stacked Kanban cards) */}
       <rect x="5" y="5" width="6" height="9.5" rx="1.8" fill="#ffffff" fillOpacity="0.95" />

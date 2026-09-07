@@ -106,6 +106,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const match = location.pathname.match(/^\/project\/([^/]+)/);
   const activeProjectId = match ? match[1] : null;
+  const activeProject = activeProjectId
+    ? projects.find((p) => p.id === activeProjectId)
+    : null;
+
+  const projectAccentColor = activeProject
+    ? activeProject.color.startsWith('#')
+      ? activeProject.color
+      : `var(--color-${activeProject.color})`
+    : undefined;
 
   const [activeSidebarId, setActiveSidebarId] = useState<string | null>(null);
   const activeSidebarProject = activeSidebarId
@@ -158,7 +167,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar Header */}
       <div className="p-5 border-b border-slate-200/50 dark:border-slate-800/30 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <AppLogo size={24} className="rounded-lg shadow-sm shadow-indigo-500/20 flex-shrink-0" />
+          <AppLogo
+            size={24}
+            accentColor={projectAccentColor}
+            className="shadow-sm flex-shrink-0 transition-all duration-300"
+            style={
+              projectAccentColor
+                ? {
+                    boxShadow: `0 2px 8px color-mix(in srgb, ${projectAccentColor} 30%, transparent)`,
+                  }
+                : undefined
+            }
+          />
           <span className="font-bold text-slate-800 dark:text-slate-50 text-lg tracking-wide">
             {t('app_title')}
           </span>

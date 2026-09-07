@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none">
   <defs>
     <linearGradient id="kl-fav-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#6366f1"/>
-      <stop offset="50%" stop-color="#4f46e5"/>
-      <stop offset="100%" stop-color="#7c3aed"/>
+      <stop offset="0%" stop-color="#68625d"/>
+      <stop offset="50%" stop-color="#44403c"/>
+      <stop offset="100%" stop-color="#262423"/>
     </linearGradient>
   </defs>
-  <!-- Squircle container -->
-  <rect width="32" height="32" rx="7.5" fill="url(#kl-fav-grad)"/>
-  <rect x="0.5" y="0.5" width="31" height="31" rx="7" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+  <!-- Square container -->
+  <rect width="32" height="32" fill="url(#kl-fav-grad)"/>
+  <rect x="0.5" y="0.5" width="31" height="31" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
 
   <!-- Column 1: Vertical spine of the K (2 cards) -->
   <rect x="5" y="5" width="6" height="9.5" rx="1.8" fill="#ffffff" fill-opacity="0.95"/>

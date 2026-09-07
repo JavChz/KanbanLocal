@@ -8,7 +8,7 @@ export const AboutTab: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 animate-fade-in text-left">
       <div className="flex items-center gap-3">
-        <AppLogo size={36} className="rounded-xl shadow-md shadow-indigo-500/25 flex-shrink-0" />
+        <AppLogo size={36} className="shadow-md flex-shrink-0" style={{ boxShadow: '0 4px 12px rgba(38, 36, 35, 0.25)' }} />
         <div>
           <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-lg leading-tight">
             KanbanLocal

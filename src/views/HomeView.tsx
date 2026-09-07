@@ -1,14 +1,226 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useKanbanStore } from '../store/useKanbanStore';
-import { Plus, CheckCircle, Clock, Circle, ListTodo } from 'lucide-react';
+import type { Project, Task } from '../types/kanban';
+import { Plus, CheckCircle, Clock, Circle, ListTodo, GripVertical } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getColorStyles } from '../utils/colors';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { ColorPicker } from '../components/ui/ColorPicker';
 import { Button } from '../components/ui/Button';
-import { BACKGROUND_IMAGES } from '../components/Layout/Layout';
+import { BACKGROUND_IMAGES } from '../utils/backgrounds';
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  DragOverlay,
+} from '@dnd-kit/core';
+import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
+import {
+  SortableContext,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+interface ProjectCardContentProps {
+  project: Project;
+  tasks: Task[];
+  status: 'ACTIVE' | 'LATE' | 'ON_TRACK';
+  relativeTime: string;
+  isOverlay?: boolean;
+}
+
+const ProjectCardContent: React.FC<ProjectCardContentProps> = ({
+  project,
+  tasks,
+  status,
+  relativeTime,
+}) => {
+  const { t } = useTranslation();
+  const colorStyles = getColorStyles(project.color);
+  const projTasks = tasks.filter((t) => t.projectId === project.id && !t.archived);
+  const doneCount = projTasks.filter((t) => t.status === 'DONE').length;
+  const projCompletionRate = projTasks.length > 0 ? Math.round((doneCount / projTasks.length) * 100) : 0;
+  const bgConfig = project.background;
+  const isBgImage = bgConfig && (bgConfig.type === 'image' || bgConfig.type === 'custom');
+  const imgUrl = bgConfig?.type === 'image'
+    ? BACKGROUND_IMAGES[bgConfig.value]
+    : bgConfig?.type === 'custom'
+    ? bgConfig.value
+    : null;
+
+  let statusBadgeClass = 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400';
+  let statusText = t('active_status');
+  let progressBarColor = colorStyles.bg;
+
+  if (status === 'LATE') {
+    statusBadgeClass = 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400';
+    statusText = t('late');
+    progressBarColor = 'bg-red-500 dark:bg-red-500';
+  } else if (status === 'ON_TRACK') {
+    statusBadgeClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400';
+    statusText = t('on_track');
+    progressBarColor = 'bg-emerald-500 dark:bg-emerald-400';
+  }
+
+  return (
+    <>
+      {isBgImage && imgUrl && (
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{
+              backgroundImage: `url(${imgUrl})`,
+              opacity: 0.35,
+            }}
+          />
+          <div className="absolute inset-0 bg-white/55 dark:bg-slate-900/70 backdrop-blur-[1px]" />
+        </div>
+      )}
+
+      <div className="relative z-10 flex flex-col justify-between h-full w-full">
+        <div>
+          <div className="flex justify-between items-start gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Circle size={8} className={`fill-current ${colorStyles.text} shrink-0`} />
+              <div className="min-w-0">
+                <h4 className="font-bold text-base text-slate-800 dark:text-slate-100 truncate pr-1" title={project.name}>
+                  {project.name}
+                </h4>
+                {project.customId && project.customId.trim() && (
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wider font-mono truncate leading-none mt-0.5">
+                    ID: {project.customId}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${statusBadgeClass}`}>
+                {statusText}
+              </span>
+              <span
+                className="text-slate-400 dark:text-slate-500 opacity-40 group-hover:opacity-100 transition-opacity p-0.5"
+                title={t('drag_to_reorder')}
+              >
+                <GripVertical size={14} />
+              </span>
+            </div>
+          </div>
+
+          {project.description ? (
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-355 mt-2 line-clamp-1">
+              {project.description}
+            </p>
+          ) : (
+            <p className="text-xs text-slate-400 dark:text-slate-600 mt-2 italic">
+              {t('none')}
+            </p>
+          )}
+
+          <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-2.5">
+            <span>{projTasks.length} {t('tasks') || 'Tasks'}</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 pt-3 border-t border-slate-200/50 dark:border-slate-800/30">
+          <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 dark:text-slate-400">
+            <span>{projCompletionRate}% {t('progress')}</span>
+            <span>{doneCount} / {projTasks.length} Done</span>
+          </div>
+
+          <div className="w-full h-1.5 bg-slate-200/50 dark:bg-slate-850 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${progressBarColor}`}
+              style={{ width: `${projCompletionRate}%` }}
+            />
+          </div>
+
+          <div className="flex justify-between items-center text-[10px] font-medium text-slate-500 dark:text-slate-405 mt-0.5">
+            <span className="flex items-center gap-1">
+              <Clock size={11} className="shrink-0" />
+              {relativeTime}
+            </span>
+            {project.deadline && (
+              <span className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/60 px-1.5 py-0.5 rounded text-[9px] text-slate-600 dark:text-slate-400 font-mono font-bold">
+                {project.deadline}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+interface SortableProjectCardProps {
+  project: Project;
+  tasks: Task[];
+  status: 'ACTIVE' | 'LATE' | 'ON_TRACK';
+  relativeTime: string;
+  onOpen: () => void;
+}
+
+const SortableProjectCard: React.FC<SortableProjectCardProps> = ({
+  project,
+  tasks,
+  status,
+  relativeTime,
+  onOpen,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: project.id });
+
+  const colorStyles = getColorStyles(project.color);
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.35 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={(e) => {
+        if (transform && (Math.abs(transform.x) > 3 || Math.abs(transform.y) > 3)) {
+          e.preventDefault();
+          return;
+        }
+        onOpen();
+      }}
+      className={`h-48 glass-card p-5 rounded-2xl cursor-grab active:cursor-grabbing flex flex-col justify-between text-left border-l-4 ${
+        colorStyles.border
+      } hover:scale-[1.01] transition-all duration-300 relative overflow-hidden group select-none ${
+        isDragging ? 'shadow-md ring-1 ring-blue-500/30' : ''
+      }`}
+    >
+      <ProjectCardContent
+        project={project}
+        tasks={tasks}
+        status={status}
+        relativeTime={relativeTime}
+      />
+    </div>
+  );
+};
 
 const getRandomProjectColor = () => {
   const hues = ['slate', 'red', 'orange', 'amber', 'emerald', 'blue', 'indigo', 'violet'];
@@ -21,7 +233,33 @@ const getRandomProjectColor = () => {
 export const HomeView: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { projects, tasks, addProject } = useKanbanStore();
+  const { projects, tasks, addProject, reorderProjects } = useKanbanStore();
+
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const activeProject = activeProjectId ? projects.find((p) => p.id === activeProjectId) : null;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveProjectId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveProjectId(null);
+    if (over && active.id !== over.id) {
+      reorderProjects(active.id as string, over.id as string);
+    }
+  };
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
@@ -30,12 +268,13 @@ export const HomeView: React.FC = () => {
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [newProjectDeadline, setNewProjectDeadline] = useState('');
 
+  const [currentTime] = useState(() => Date.now());
   const location = useLocation();
 
   // Trigger project creation modal if action=new-project query parameter is found
   React.useEffect(() => {
     if (location.search.includes('action=new-project')) {
-      setIsCreateOpen(true);
+      setTimeout(() => setIsCreateOpen(true), 0);
       navigate('/', { replace: true });
     }
   }, [location.search, navigate]);
@@ -68,7 +307,7 @@ export const HomeView: React.FC = () => {
     const hasUnfinishedTasks = projTasks.some((t) => t.status !== 'DONE') || projTasks.length === 0;
 
     const deadlineDate = new Date(proj.deadline + 'T23:59:59');
-    const now = new Date();
+    const now = new Date(currentTime);
 
     if (now > deadlineDate && hasUnfinishedTasks) {
       return 'LATE';
@@ -79,7 +318,7 @@ export const HomeView: React.FC = () => {
   // Relative time string helper
   const getRelativeTimeString = (timestamp?: number) => {
     if (!timestamp) return t('none');
-    const diff = Date.now() - timestamp;
+    const diff = currentTime - timestamp;
     if (diff < 60000) {
       return t('just_now');
     }
@@ -202,136 +441,62 @@ export const HomeView: React.FC = () => {
           {t('your_boards')}
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Create Project Card */}
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="h-48 border-2 border-dashed border-slate-300 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-400 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all duration-200 hover:bg-slate-200/20 dark:hover:bg-slate-900/10 group active:scale-98"
-          >
-            <div className="p-3 rounded-full bg-slate-200 dark:bg-slate-900 text-slate-500 dark:text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-colors">
-              <Plus size={22} />
-            </div>
-            <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
-              {t('add_project')}
-            </span>
-          </button>
-
-          {/* Render Active Projects */}
-          {projects.map((proj) => {
-            const colorStyles = getColorStyles(proj.color);
-            const projTasks = tasks.filter((t) => t.projectId === proj.id && !t.archived);
-            const doneCount = projTasks.filter((t) => t.status === 'DONE').length;
-            const projCompletionRate = projTasks.length > 0 ? Math.round((doneCount / projTasks.length) * 100) : 0;
-            const bgConfig = proj.background;
-            const isBgImage = bgConfig && (bgConfig.type === 'image' || bgConfig.type === 'custom');
-            const imgUrl = bgConfig?.type === 'image'
-              ? BACKGROUND_IMAGES[bgConfig.value]
-              : bgConfig?.type === 'custom'
-              ? bgConfig.value
-              : null;
-
-            const boardStatus = getProjectStatus(proj);
-            let statusBadgeClass = 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400';
-            let statusText = t('active_status');
-            let progressBarColor = colorStyles.bg;
-
-            if (boardStatus === 'LATE') {
-              statusBadgeClass = 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400';
-              statusText = t('late');
-              progressBarColor = 'bg-red-500 dark:bg-red-500';
-            } else if (boardStatus === 'ON_TRACK') {
-              statusBadgeClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400';
-              statusText = t('on_track');
-              progressBarColor = 'bg-emerald-500 dark:bg-emerald-400';
-            }
-
-            return (
-              <div
-                key={proj.id}
-                onClick={() => navigate(`/project/${proj.id}`)}
-                className={`h-48 glass-card p-5 rounded-2xl cursor-pointer flex flex-col justify-between text-left border-l-4 ${colorStyles.border} hover:scale-[1.01] transition-all duration-300 relative overflow-hidden`}
-              >
-                {isBgImage && imgUrl && (
-                  <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
-                    <div 
-                      className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                      style={{ 
-                        backgroundImage: `url(${imgUrl})`,
-                        opacity: 0.35, // Clearer visibility on the card background
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-white/55 dark:bg-slate-900/70 backdrop-blur-[1px]" />
-                  </div>
-                )}
-
-                <div className="relative z-10 flex flex-col justify-between h-full w-full">
-                  <div>
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <Circle size={8} className={`fill-current ${colorStyles.text} shrink-0`} />
-                        <div className="min-w-0">
-                          <h4 className="font-bold text-base text-slate-800 dark:text-slate-100 truncate pr-1" title={proj.name}>
-                            {proj.name}
-                          </h4>
-                          {/* Only show Custom Board ID if it is not empty */}
-                          {proj.customId && proj.customId.trim() && (
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wider font-mono truncate leading-none mt-0.5">
-                              ID: {proj.customId}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider shrink-0 ${statusBadgeClass}`}>
-                        {statusText}
-                      </span>
-                    </div>
-
-                    {proj.description ? (
-                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-355 mt-2 line-clamp-1">
-                        {proj.description}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-slate-400 dark:text-slate-600 mt-2 italic">
-                        {t('none')}
-                      </p>
-                    )}
-
-                    <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-2.5">
-                      <span>{projTasks.length} {t('tasks') || 'Tasks'}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 pt-3 border-t border-slate-200/50 dark:border-slate-800/30">
-                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                      <span>{projCompletionRate}% {t('progress')}</span>
-                      <span>{doneCount} / {projTasks.length} Done</span>
-                    </div>
-
-                    <div className="w-full h-1.5 bg-slate-200/50 dark:bg-slate-850 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${progressBarColor}`}
-                        style={{ width: `${projCompletionRate}%` }}
-                      />
-                    </div>
-
-                    <div className="flex justify-between items-center text-[10px] font-medium text-slate-500 dark:text-slate-405 mt-0.5">
-                      <span className="flex items-center gap-1">
-                        <Clock size={11} className="shrink-0" />
-                        {getRelativeTimeString(proj.updatedAt)}
-                      </span>
-                      {proj.deadline && (
-                        <span className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/60 px-1.5 py-0.5 rounded text-[9px] text-slate-600 dark:text-slate-400 font-mono font-bold">
-                          {proj.deadline}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Create Project Card */}
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="h-48 border-2 border-dashed border-slate-300 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-400 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all duration-200 hover:bg-slate-200/20 dark:hover:bg-slate-900/10 group active:scale-98"
+            >
+              <div className="p-3 rounded-full bg-slate-200 dark:bg-slate-900 text-slate-500 dark:text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-colors">
+                <Plus size={22} />
               </div>
-            );
-          })}
-        </div>
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
+                {t('add_project')}
+              </span>
+            </button>
+
+            {/* Render Active Projects with SortableContext */}
+            <SortableContext items={projects.map((p) => p.id)} strategy={rectSortingStrategy}>
+              {projects.map((proj) => (
+                <SortableProjectCard
+                  key={proj.id}
+                  project={proj}
+                  tasks={tasks}
+                  status={getProjectStatus(proj)}
+                  relativeTime={getRelativeTimeString(proj.updatedAt)}
+                  onOpen={() => navigate(`/project/${proj.id}`)}
+                />
+              ))}
+            </SortableContext>
+          </div>
+
+          {createPortal(
+            <DragOverlay>
+              {activeProject ? (
+                <div
+                  className={`h-48 w-80 glass-card p-5 rounded-2xl flex flex-col justify-between text-left border-l-4 ${
+                    getColorStyles(activeProject.color).border
+                  } shadow-2xl scale-105 rotate-1 pointer-events-none relative overflow-hidden select-none`}
+                >
+                  <ProjectCardContent
+                    project={activeProject}
+                    tasks={tasks}
+                    status={getProjectStatus(activeProject)}
+                    relativeTime={getRelativeTimeString(activeProject.updatedAt)}
+                    isOverlay
+                  />
+                </div>
+              ) : null}
+            </DragOverlay>,
+            document.body
+          )}
+        </DndContext>
       </div>
 
       {/* Create Project Dialog */}

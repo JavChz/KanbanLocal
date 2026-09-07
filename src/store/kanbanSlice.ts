@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand';
+import { arrayMove } from '@dnd-kit/sortable';
 import type { KanbanState, Task, Project, TaskStatus, ProjectBackground } from '../types/kanban';
 
 export interface KanbanSlice {
@@ -21,6 +22,7 @@ export interface KanbanSlice {
     deadline?: string
   ) => void;
   deleteProject: (id: string) => void;
+  reorderProjects: (activeId: string, overId: string) => void;
 }
 
 export const createKanbanSlice: StateCreator<
@@ -210,5 +212,14 @@ export const createKanbanSlice: StateCreator<
       tasks: state.tasks.filter((t) => t.projectId !== id),
       lastOpenedProject: state.lastOpenedProject === id ? null : state.lastOpenedProject,
     }));
+  },
+
+  reorderProjects: (activeId, overId) => {
+    set((state) => {
+      const oldIndex = state.projects.findIndex((p) => p.id === activeId);
+      const newIndex = state.projects.findIndex((p) => p.id === overId);
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return {};
+      return { projects: arrayMove(state.projects, oldIndex, newIndex) };
+    });
   },
 });

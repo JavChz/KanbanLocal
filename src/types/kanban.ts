@@ -53,6 +53,7 @@ export interface KanbanState {
     deadline?: string
   ) => void;
   deleteProject: (id: string) => void;
+  reorderProjects: (activeId: string, overId: string) => void;
   
   // Settings / Globals
   setLanguage: (lang: 'en' | 'fr' | 'ja' | 'es') => void;

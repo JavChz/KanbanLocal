@@ -126,6 +126,7 @@ const resources = {
       archive_title: "Project Archive",
       no_archived_tasks: "No archived tasks in this project.",
       archive_all_done: "Archive all done tasks",
+      drag_to_reorder: "Drag to reorder",
     }
   },
   fr: {
@@ -252,6 +253,7 @@ const resources = {
       archive_title: "Archive du projet",
       no_archived_tasks: "Aucune tâche archivée dans ce projet.",
       archive_all_done: "Archiver toutes les tâches terminées",
+      drag_to_reorder: "Glisser pour réorganiser",
     }
   },
   ja: {
@@ -378,6 +380,7 @@ const resources = {
       archive_title: "プロジェクトアーカイブ",
       no_archived_tasks: "このプロジェクトにアーカイブされたタスクはありません。",
       archive_all_done: "すべての完了タスクをアーカイブ",
+      drag_to_reorder: "ドラッグして並べ替え",
     }
   },
   es: {
@@ -504,6 +507,7 @@ const resources = {
       archive_title: "Archivo del Proyecto",
       no_archived_tasks: "No hay tareas archivadas en este proyecto.",
       archive_all_done: "Archivar todas las tareas hechas",
+      drag_to_reorder: "Arrastrar para reordenar",
     }
   }
 };

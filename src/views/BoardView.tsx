@@ -24,7 +24,7 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useTranslation } from 'react-i18next';
 import { Edit, Trash2, Check, Archive, ArchiveRestore } from 'lucide-react';
 import { getColorStyles } from '../utils/colors';
-import { BACKGROUND_IMAGES } from '../components/Layout/Layout';
+import { BACKGROUND_IMAGES } from '../utils/backgrounds';
 
 export const BoardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -107,8 +107,10 @@ export const BoardView: React.FC = () => {
     if (taskIdParam && projectTasks.length > 0) {
       const taskToOpen = projectTasks.find((t) => t.id === taskIdParam);
       if (taskToOpen) {
-        setSelectedTask(taskToOpen);
-        setIsTaskModalOpen(true);
+        setTimeout(() => {
+          setSelectedTask(taskToOpen);
+          setIsTaskModalOpen(true);
+        }, 0);
       }
     }
   }, [searchParams, projectTasks]);

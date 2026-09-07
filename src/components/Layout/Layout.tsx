@@ -1,33 +1,98 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useKanbanStore } from '../../store/useKanbanStore';
-import { Home, Globe, Settings, Menu, X, Kanban, Plus, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Project } from '../../types/kanban';
+import { Home, Globe, Settings, Menu, X, Kanban, Plus, Circle, ChevronLeft, ChevronRight, GripVertical } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getColorStyles } from '../../utils/colors';
 import { SettingsModal } from './SettingsModal';
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  DragOverlay,
+} from '@dnd-kit/core';
+import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
-import catImg from '../../assets/bg-images/cat.jpg';
-import cocodrileImg from '../../assets/bg-images/cocodrile.jpg';
-import fieldsImg from '../../assets/bg-images/fields.jpg';
-import moonImg from '../../assets/bg-images/moon.jpg';
-import sunsetImg from '../../assets/bg-images/sunset.jpg';
-import sunshinesImg from '../../assets/bg-images/sunshines.jpg';
-
-export const BACKGROUND_IMAGES: Record<string, string> = {
-  cat: catImg,
-  cocodrile: cocodrileImg,
-  fields: fieldsImg,
-  moon: moonImg,
-  sunset: sunsetImg,
-  sunshines: sunshinesImg,
-};
+import { BACKGROUND_IMAGES } from '../../utils/backgrounds';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
+interface SortableSidebarProjectProps {
+  project: Project;
+  isActive: boolean;
+  onSelect: () => void;
+}
+
+const SortableSidebarProject: React.FC<SortableSidebarProjectProps> = ({
+  project,
+  isActive,
+  onSelect,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: project.id });
+
+  const colorStyles = getColorStyles(project.color);
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.35 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={(e) => {
+        if (transform && (Math.abs(transform.x) > 3 || Math.abs(transform.y) > 3)) {
+          e.preventDefault();
+          return;
+        }
+        onSelect();
+      }}
+      className={`group flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-all duration-150 cursor-grab active:cursor-grabbing select-none ${
+        isActive
+          ? 'bg-blue-600/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium'
+          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/55 dark:hover:bg-slate-800/40'
+      } ${isDragging ? 'shadow-sm ring-1 ring-blue-500/30' : ''}`}
+    >
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <Circle size={8} className={`fill-current ${colorStyles.text} shrink-0`} />
+        <span className="truncate flex-1">{project.name}</span>
+      </div>
+      <GripVertical
+        size={13}
+        className="text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-1"
+      />
+    </div>
+  );
+};
+
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { projects } = useKanbanStore();
+  const { projects, reorderProjects } = useKanbanStore();
   const { t } = useTranslation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -46,6 +111,34 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return false;
     }
   });
+
+  const [activeSidebarId, setActiveSidebarId] = useState<string | null>(null);
+  const activeSidebarProject = activeSidebarId
+    ? projects.find((p) => p.id === activeSidebarId)
+    : null;
+
+  const sidebarSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleSidebarDragStart = (event: DragStartEvent) => {
+    setActiveSidebarId(event.active.id as string);
+  };
+
+  const handleSidebarDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveSidebarId(null);
+    if (over && active.id !== over.id) {
+      reorderProjects(active.id as string, over.id as string);
+    }
+  };
 
   // Synchronize background settings with document.body to avoid stacking context issues for backdrop-filter
   useEffect(() => {
@@ -228,34 +321,55 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               </button>
             </div>
 
-            <div className="space-y-0.5 max-h-48 overflow-y-auto pr-1">
-              {projects.length === 0 ? (
-                <p className="text-xs text-slate-500 dark:text-slate-400 px-2 italic">
-                  {t('no_projects')}
-                </p>
-              ) : (
-                projects.map((proj) => {
-                  const colorStyles = getColorStyles(proj.color);
-                  return (
-                    <NavLink
-                      key={proj.id}
-                      to={`/project/${proj.id}`}
-                      onClick={closeSidebar}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-150 ${
-                          isActive
-                            ? 'bg-blue-600/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium'
-                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/55 dark:hover:bg-slate-800/40'
-                        }`
-                      }
-                    >
-                      <Circle size={8} className={`fill-current ${colorStyles.text}`} />
-                      <span className="truncate flex-1">{proj.name}</span>
-                    </NavLink>
-                  );
-                })
+            <DndContext
+              sensors={sidebarSensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleSidebarDragStart}
+              onDragEnd={handleSidebarDragEnd}
+            >
+              <SortableContext
+                items={projects.map((p) => p.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-0.5 max-h-48 overflow-y-auto pr-1">
+                  {projects.length === 0 ? (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 px-2 italic">
+                      {t('no_projects')}
+                    </p>
+                  ) : (
+                    projects.map((proj) => (
+                      <SortableSidebarProject
+                        key={proj.id}
+                        project={proj}
+                        isActive={activeProjectId === proj.id}
+                        onSelect={() => {
+                          closeSidebar();
+                          navigate(`/project/${proj.id}`);
+                        }}
+                      />
+                    ))
+                  )}
+                </div>
+              </SortableContext>
+
+              {createPortal(
+                <DragOverlay>
+                  {activeSidebarProject ? (
+                    <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-sm bg-white dark:bg-slate-850 shadow-2xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 scale-105 select-none pointer-events-none w-52">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <Circle
+                          size={8}
+                          className={`fill-current ${getColorStyles(activeSidebarProject.color).text} shrink-0`}
+                        />
+                        <span className="truncate flex-1 font-medium">{activeSidebarProject.name}</span>
+                      </div>
+                      <GripVertical size={13} className="text-slate-400 shrink-0" />
+                    </div>
+                  ) : null}
+                </DragOverlay>,
+                document.body
               )}
-            </div>
+            </DndContext>
           </div>
         </nav>
 

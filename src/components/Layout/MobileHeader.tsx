@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Kanban, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { AppLogo } from '../ui/AppLogo';
 
 interface MobileHeaderProps {
   isSidebarOpen: boolean;
@@ -16,8 +17,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
   return (
     <header className="md:hidden flex items-center justify-between px-4 py-3 glass-panel border-b border-slate-200/50 dark:border-slate-800/30 sticky top-0 z-40">
-      <Link to="/" className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-100">
-        <Kanban size={20} className="text-blue-500" />
+      <Link to="/" className="flex items-center gap-2.5 font-bold text-slate-800 dark:text-slate-100">
+        <AppLogo size={22} className="rounded-md shadow-sm shadow-indigo-500/20 flex-shrink-0" />
         <span className="tracking-wide">{t('app_title')}</span>
       </Link>
       <button

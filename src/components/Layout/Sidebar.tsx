@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useKanbanStore } from '../../store/useKanbanStore';
 import type { Project } from '../../types/kanban';
-import { Home, Globe, Settings, Kanban, Plus, Circle, ChevronLeft, GripVertical } from 'lucide-react';
+import { Home, Globe, Settings, Plus, Circle, ChevronLeft, GripVertical } from 'lucide-react';
+import { AppLogo } from '../ui/AppLogo';
 import { useTranslation } from 'react-i18next';
 import { getColorStyles } from '../../utils/colors';
 import {
@@ -157,7 +158,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar Header */}
       <div className="p-5 border-b border-slate-200/50 dark:border-slate-800/30 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <Kanban size={22} className="text-blue-500" />
+          <AppLogo size={24} className="rounded-lg shadow-sm shadow-indigo-500/20 flex-shrink-0" />
           <span className="font-bold text-slate-800 dark:text-slate-50 text-lg tracking-wide">
             {t('app_title')}
           </span>

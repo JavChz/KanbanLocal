@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Kanban } from 'lucide-react';
+import { AppLogo } from '../../ui/AppLogo';
 
 export const AboutTab: React.FC = () => {
   const { t } = useTranslation();
@@ -8,7 +8,7 @@ export const AboutTab: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 animate-fade-in text-left">
       <div className="flex items-center gap-3">
-        <Kanban size={32} className="text-blue-500" />
+        <AppLogo size={36} className="rounded-xl shadow-md shadow-indigo-500/25 flex-shrink-0" />
         <div>
           <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-lg leading-tight">
             KanbanLocal

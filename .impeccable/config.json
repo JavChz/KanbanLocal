@@ -1,0 +1,16 @@
+{
+  "hook": {
+    "enabled": true,
+    "quiet": false
+  },
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [
+      "node_modules/**",
+      "dist/**"
+    ],
+    "designSystem": {
+      "enabled": true
+    }
+  }
+}

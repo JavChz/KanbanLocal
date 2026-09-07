@@ -22,7 +22,7 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const variantStyles = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md dark:bg-blue-500 dark:hover:bg-blue-600',
+    primary: 'bg-[var(--project-color,var(--color-blue-600))] hover:bg-[color-mix(in_srgb,var(--project-color,var(--color-blue-600))_90%,black)] text-white shadow-sm hover:shadow-md dark:bg-[var(--project-color,var(--color-blue-500))] dark:hover:bg-[color-mix(in_srgb,var(--project-color,var(--color-blue-500))_85%,black)]',
     secondary: 'glass-panel text-slate-800 dark:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50',
     danger: 'bg-red-600 hover:bg-red-700 text-white shadow-sm hover:shadow-md dark:bg-red-500 dark:hover:bg-red-600',
     ghost: 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/55 dark:hover:bg-slate-800/40',

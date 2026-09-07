@@ -63,9 +63,9 @@ export const Modal: React.FC<ModalProps> = ({
       />
 
       {/* Modal Container */}
-      <div style={style} className={`relative w-full ${size === 'lg' ? 'max-w-2xl' : size === 'sm' ? 'max-w-sm' : 'max-w-md'} glass-panel p-6 rounded-2xl shadow-2xl z-10 flex flex-col gap-4 animate-fade-in scale-100 max-h-[90vh] ${overflowVisible ? 'overflow-visible' : 'overflow-y-auto'}`}>
+      <div style={style} className={`relative w-full ${size === 'lg' ? 'max-w-2xl' : size === 'sm' ? 'max-w-sm' : 'max-w-md'} glass-panel p-6 rounded-2xl shadow-2xl z-10 flex flex-col gap-4 animate-modal-entrance scale-100 max-h-[90vh] ${overflowVisible ? 'overflow-visible' : 'overflow-y-auto'}`}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200/50 dark:border-slate-800/30 pb-3">
+        <div className="flex items-center justify-between pb-1">
           {title ? (
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
               {title}

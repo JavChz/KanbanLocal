@@ -167,13 +167,21 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
     </div>
   );
 
+  const project = projects.find((p) => p.id === projectId);
+  const projectColorVar = project ? `var(--color-${project.color})` : undefined;
+
+  const combinedStyle: React.CSSProperties = {
+    ...modalStyle,
+    ...(projectColorVar ? { '--project-color': projectColorVar } : {}),
+  } as React.CSSProperties;
+
   return (
     <>
       <Modal
         isOpen={isOpen}
         onClose={onClose}
         title={t('task_details')}
-        style={modalStyle}
+        style={combinedStyle}
         headerActions={headerActions}
       >
       <div ref={contentRef} className="flex flex-col gap-5 text-left">
@@ -230,7 +238,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
 
         {/* Tags Section */}
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
             <Tag size={13} />
             {t('tags')}
           </label>
@@ -238,13 +246,18 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
             {tags.map((tag, idx) => (
               <span
                 key={idx}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/30"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border"
+                style={{
+                  borderColor: 'color-mix(in srgb, var(--project-color, var(--color-blue-500)) 30%, transparent)',
+                  backgroundColor: 'color-mix(in srgb, var(--project-color, var(--color-blue-500)) 10%, transparent)',
+                  color: 'var(--project-color, var(--color-blue-600))',
+                }}
               >
                 {tag}
                 <button
                   type="button"
                   onClick={() => handleRemoveTag(idx)}
-                  className="hover:text-red-500 rounded-full cursor-pointer"
+                  className="hover:text-red-500 rounded-full cursor-pointer inline-flex items-center justify-center"
                 >
                   <X size={10} />
                 </button>
@@ -267,7 +280,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
 
         {/* Links Section */}
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
             <Link2 size={13} />
             {t('links')}
           </label>
@@ -281,7 +294,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
                   href={link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1.5 truncate pr-2"
+                  className="hover:underline flex items-center gap-1.5 truncate pr-2 font-semibold"
+                  style={{ color: 'var(--project-color, var(--color-blue-600))' }}
                 >
                   <ExternalLink size={11} className="flex-shrink-0" />
                   <span className="truncate">{link}</span>
@@ -310,15 +324,15 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
           </form>
         </div>
 
-        {/* Modal Action Footer */}
-        <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-800/30">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            {t('cancel')}
-          </Button>
-          <Button type="button" variant="primary" onClick={handleSave}>
-            {t('save')}
-          </Button>
-        </div>
+          {/* Modal Action Footer */}
+          <div className="flex justify-end gap-2 mt-2 pt-2">
+            <Button type="button" variant="secondary" onClick={onClose}>
+              {t('cancel')}
+            </Button>
+            <Button type="button" variant="primary" onClick={handleSave}>
+              {t('save')}
+            </Button>
+          </div>
 
       </div>
     </Modal>

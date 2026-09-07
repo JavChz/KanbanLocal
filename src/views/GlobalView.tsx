@@ -201,16 +201,18 @@ export const GlobalView: React.FC = () => {
                     {filteredTasks.map((task) => {
                       const proj = projects.find((p) => p.id === task.projectId);
                       const colorStyles = proj ? getColorStyles(proj.color) : { text: 'text-slate-400', bg: 'bg-slate-400' };
+                      const projectColorVar = proj ? `var(--color-${proj.color})` : undefined;
 
                       return (
                         <tr
                           key={task.id}
                           onClick={() => handleRowClick(task)}
                           className="group hover:bg-slate-200/30 dark:hover:bg-slate-900/10 cursor-pointer transition-colors duration-150"
+                          style={projectColorVar ? { '--project-color': projectColorVar } as React.CSSProperties : undefined}
                         >
                           {/* Title & Desc */}
                           <td className="px-5 py-4">
-                            <div className="font-semibold text-slate-900 dark:text-slate-100 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            <div className="font-semibold text-slate-900 dark:text-slate-100 text-sm group-hover:text-[var(--project-color)] transition-colors">
                               {task.title}
                             </div>
                             {task.description && (
@@ -243,7 +245,7 @@ export const GlobalView: React.FC = () => {
                                 e.stopPropagation();
                                 navigate(`/project/${task.projectId}?task=${task.id}`);
                               }}
-                              className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-150 p-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800/40 cursor-pointer inline-flex items-center justify-center"
+                              className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-[var(--project-color)] transition-all duration-150 p-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800/40 cursor-pointer inline-flex items-center justify-center"
                               title={t('open_in_project')}
                             >
                               <ExternalLink size={13} />
@@ -296,46 +298,50 @@ export const GlobalView: React.FC = () => {
                         {t('no_tasks_search')}
                       </div>
                     ) : (
-                      projectTasks.map((task) => (
-                        <div
-                          key={task.id}
-                          onClick={() => handleRowClick(task)}
-                          className="group glass-card p-4 rounded-xl cursor-pointer border border-slate-200/40 dark:border-slate-800/20 hover:border-blue-500/40 dark:hover:border-blue-400/40 hover:shadow-xs transition-all duration-200 text-left flex flex-col gap-2 relative"
-                        >
-                          <div className="flex justify-between items-start gap-2">
-                            <span className="text-xs font-semibold text-slate-850 dark:text-slate-100 break-words line-clamp-2 flex-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                              {task.title}
-                            </span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/project/${task.projectId}?task=${task.id}`);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-150 p-1 rounded hover:bg-slate-200/50 dark:hover:bg-slate-800/50 cursor-pointer shrink-0 inline-flex items-center justify-center"
-                              title={t('open_in_project')}
-                            >
-                              <ExternalLink size={11} />
-                            </button>
-                          </div>
-
-                          {task.description && (
-                            <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
-                              {task.description}
-                            </p>
-                          )}
-
-                          <div className="flex justify-between items-center mt-1 pt-1 border-t border-slate-100/50 dark:border-slate-800/10">
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${getStatusBadgeClass(task.status, task.archived)}`}>
-                              {getStatusLabel(task.status, task.archived)}
-                            </span>
-                            {task.deadline && (
-                              <span className="text-[9px] font-bold font-mono text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-900/60 px-1.5 py-0.5 rounded">
-                                {task.deadline}
+                      projectTasks.map((task) => {
+                        const projectColorVar = `var(--color-${project.color})`;
+                        return (
+                          <div
+                            key={task.id}
+                            onClick={() => handleRowClick(task)}
+                            className="group glass-card p-4 rounded-xl cursor-pointer border border-slate-200/40 dark:border-slate-800/20 hover:border-[var(--project-color)]/40 hover:shadow-xs transition-all duration-200 text-left flex flex-col gap-2 relative"
+                            style={{ '--project-color': projectColorVar } as React.CSSProperties}
+                          >
+                            <div className="flex justify-between items-start gap-2">
+                              <span className="text-xs font-semibold text-slate-850 dark:text-slate-100 break-words line-clamp-2 flex-1 group-hover:text-[var(--project-color)] transition-colors">
+                                {task.title}
                               </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/project/${task.projectId}?task=${task.id}`);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-[var(--project-color)] transition-all duration-150 p-1 rounded hover:bg-slate-200/50 dark:hover:bg-slate-800/50 cursor-pointer shrink-0 inline-flex items-center justify-center"
+                                title={t('open_in_project')}
+                              >
+                                <ExternalLink size={11} />
+                              </button>
+                            </div>
+
+                            {task.description && (
+                              <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
+                                {task.description}
+                              </p>
                             )}
+
+                            <div className="flex justify-between items-center mt-1 pt-1 border-t border-slate-100/50 dark:border-slate-800/10">
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${getStatusBadgeClass(task.status, task.archived)}`}>
+                                {getStatusLabel(task.status, task.archived)}
+                              </span>
+                              {task.deadline && (
+                                <span className="text-[9px] font-bold font-mono text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-900/60 px-1.5 py-0.5 rounded">
+                                  {task.deadline}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>

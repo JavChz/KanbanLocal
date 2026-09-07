@@ -219,7 +219,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <div className="flex flex-col gap-5 animate-fade-in text-left">
               {/* Language Selector Dropdown */}
               <div className="flex flex-col gap-2 text-left relative">
-                <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                   <Globe size={13} />
                   {t('language')}
                 </span>
@@ -341,7 +341,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               {/* Selective Boards Grid */}
               <div className="flex flex-col gap-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                     {t('select_boards')}
                   </span>
                   <div className="flex gap-2 text-2xs font-semibold">
@@ -404,7 +404,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 )}
               </div>
 
-              <div className="pt-3 border-t border-slate-200/50 dark:border-slate-800/30 flex justify-end">
+              <div className="pt-2 flex justify-end">
                 <Button
                   onClick={handleExportFiltered}
                   disabled={selectedExportBoardIds.length === 0}
@@ -450,7 +450,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
                 {/* Textarea fallback */}
                 <div className="flex flex-col gap-2.5">
-                  <span className="text-2xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center">
+                  <span className="text-2xs font-semibold text-slate-400 dark:text-slate-550 text-center">
                     {t('or_paste_json')}
                   </span>
                   <Textarea
@@ -488,7 +488,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 </div>
               </div>
 
-              <hr className="border-slate-200/50 dark:border-slate-800/30" />
+              <div className="h-2" />
 
               <div>
                 <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm mb-1.5">
@@ -518,7 +518,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 </div>
               </div>
               <p>{t('about_desc')}</p>
-              <div className="border-t border-slate-200/50 dark:border-slate-800/30 pt-3 flex justify-between items-center text-xs">
+              <div className="pt-2 flex justify-between items-center text-xs">
                 <span className="font-semibold text-slate-600 dark:text-slate-400 font-sans">{t('created_by')} Javier Garcia Chavez: </span>
                 <div className="flex gap-3">
                   <a

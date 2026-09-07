@@ -94,7 +94,11 @@ export const Column: React.FC<ColumnProps> = ({
     <form
       ref={formRef}
       onSubmit={handleSubmit}
-      className="flex flex-col gap-2 p-3 rounded-xl border border-blue-500/30 bg-blue-500/5 dark:bg-blue-500/3 animate-fade-in"
+      className="flex flex-col gap-2 p-3 rounded-xl border animate-fade-in"
+      style={{
+        borderColor: 'color-mix(in srgb, var(--project-color) 30%, var(--color-slate-200))',
+        backgroundColor: 'color-mix(in srgb, var(--project-color) 4%, transparent)',
+      }}
     >
       <input
         ref={inputRef}
@@ -117,7 +121,7 @@ export const Column: React.FC<ColumnProps> = ({
          </button>
         <button
           type="submit"
-          className="p-1 rounded text-slate-400 hover:text-green-500 hover:bg-slate-200/30 dark:hover:bg-slate-800/30 cursor-pointer"
+          className="p-1 rounded text-slate-400 hover:text-[var(--project-color)] hover:bg-slate-200/30 dark:hover:bg-slate-800/30 cursor-pointer"
         >
           <Check size={14} />
         </button>
@@ -129,7 +133,7 @@ export const Column: React.FC<ColumnProps> = ({
     <div
       ref={setNodeRef}
       className={`flex-1 min-w-[280px] flex flex-col rounded-2xl glass-panel p-4 transition-all duration-200 board-column ${
-        isOver ? 'bg-slate-200/40 dark:bg-slate-800/20 scale-[1.005] ring-1 ring-blue-500/20' : ''
+        isOver ? 'bg-slate-200/40 dark:bg-slate-800/20 scale-[1.005] ring-1 ring-[var(--project-color)]/20' : ''
       }`}
     >
       {/* Column Header */}
@@ -138,7 +142,7 @@ export const Column: React.FC<ColumnProps> = ({
           <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-wide uppercase">
             {title}
           </h4>
-          <span className="text-2xs font-bold font-mono px-2 py-0.5 rounded-full bg-slate-200/50 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+          <span className="text-2xs font-bold font-mono px-2 py-0.5 rounded-full bg-slate-200/50 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
             {tasks.length}
           </span>
         </div>
@@ -157,7 +161,7 @@ export const Column: React.FC<ColumnProps> = ({
               setAddingPosition('top');
               setIsAdding(true);
             }}
-            className="p-1 rounded-md text-slate-400 hover:text-blue-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-slate-400 hover:text-[var(--project-color)] hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
             title={t('add_task')}
           >
             <Plus size={16} />

@@ -10,7 +10,7 @@ body {
   font-family: var(--font-sans);
   background-color: #f1f5f9; /* Slate-100 for a solid clean backdrop */
   color: var(--color-slate-900);
-  transition: color 0.2s ease, background-color 0.2s ease;
+  transition: color 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   min-height: 100vh;
   margin: 0;
   overflow-x: hidden;
@@ -41,14 +41,14 @@ html.dark .glass-panel {
 .glass-card {
   background: #ffffff; /* Solid white in light mode */
   border: 1px solid var(--color-slate-200); /* Crisp border */
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
 }
 
 html.dark .glass-card {
   background: rgba(30, 41, 59, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.03);
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
@@ -69,14 +69,14 @@ html.dark .glass-card:hover {
   background: #ffffff; /* Solid white input background */
   border: 1px solid var(--color-slate-300); /* Solid slate-300 border */
   outline: none;
-  transition: all 0.2s ease;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   color: var(--color-slate-900);
 }
 
 .glass-input:focus {
   background: #ffffff;
-  border-color: var(--color-blue-500);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  border-color: var(--project-color, var(--color-blue-500));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--project-color, var(--color-blue-500)) 12%, transparent);
 }
 
 html.dark .glass-input {
@@ -87,8 +87,8 @@ html.dark .glass-input {
 
 html.dark .glass-input:focus {
   background: rgba(15, 23, 42, 0.5);
-  border-color: var(--color-blue-400);
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.12);
+  border-color: var(--project-color, var(--color-blue-400));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--project-color, var(--color-blue-400)) 15%, transparent);
 }
 
 /* Custom Scrollbar */
@@ -126,6 +126,21 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 
 .animate-fade-in {
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalEntrance {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-entrance {
+  animation: modalEntrance 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Premium Frozen Glass styling with project-colored bottom borders */
@@ -270,3 +285,15 @@ html.dark .has-bg-image .glass-card:hover {
 html.dark .has-bg-image .glass-card:hover::before {
   background: rgba(30, 41, 59, 0.9) !important;
 }
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-delay: 0s !important;
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+

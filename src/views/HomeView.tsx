@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useKanbanStore } from '../store/useKanbanStore';
 import type { Project, Task } from '../types/kanban';
@@ -448,19 +447,6 @@ export const HomeView: React.FC = () => {
           onDragEnd={handleDragEnd}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Create Project Card */}
-            <button
-              onClick={() => setIsCreateOpen(true)}
-              className="h-48 border-2 border-dashed border-slate-300 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-400 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all duration-200 hover:bg-slate-200/20 dark:hover:bg-slate-900/10 group active:scale-98"
-            >
-              <div className="p-3 rounded-full bg-slate-200 dark:bg-slate-900 text-slate-500 dark:text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-colors">
-                <Plus size={22} />
-              </div>
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
-                {t('add_project')}
-              </span>
-            </button>
-
             {/* Render Active Projects with SortableContext */}
             <SortableContext items={projects.map((p) => p.id)} strategy={rectSortingStrategy}>
               {projects.map((proj) => (
@@ -474,28 +460,38 @@ export const HomeView: React.FC = () => {
                 />
               ))}
             </SortableContext>
+
+            {/* Create Project Card (placed at the end) */}
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="h-48 border-2 border-dashed border-slate-300 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-400 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all duration-200 hover:bg-slate-200/20 dark:hover:bg-slate-900/10 group active:scale-98"
+            >
+              <div className="p-3 rounded-full bg-slate-200 dark:bg-slate-900 text-slate-500 dark:text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-colors">
+                <Plus size={22} />
+              </div>
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
+                {t('add_project')}
+              </span>
+            </button>
           </div>
 
-          {createPortal(
-            <DragOverlay>
-              {activeProject ? (
-                <div
-                  className={`h-48 w-80 glass-card bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 p-5 rounded-2xl flex flex-col justify-between text-left border-l-4 ${
-                    getColorStyles(activeProject.color).border
-                  } shadow-2xl scale-105 rotate-1 pointer-events-none relative overflow-hidden select-none`}
-                >
-                  <ProjectCardContent
-                    project={activeProject}
-                    tasks={tasks}
-                    status={getProjectStatus(activeProject)}
-                    relativeTime={getRelativeTimeString(activeProject.updatedAt)}
-                    isOverlay
-                  />
-                </div>
-              ) : null}
-            </DragOverlay>,
-            document.body
-          )}
+          <DragOverlay>
+            {activeProject ? (
+              <div
+                className={`drag-overlay-card h-48 w-80 p-5 rounded-2xl flex flex-col justify-between text-left border-l-4 ${
+                  getColorStyles(activeProject.color).border
+                } shadow-2xl scale-105 rotate-1 pointer-events-none relative overflow-hidden select-none`}
+              >
+                <ProjectCardContent
+                  project={activeProject}
+                  tasks={tasks}
+                  status={getProjectStatus(activeProject)}
+                  relativeTime={getRelativeTimeString(activeProject.updatedAt)}
+                  isOverlay
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
       </div>
 

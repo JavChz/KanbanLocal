@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useKanbanStore } from '../../store/useKanbanStore';
 import type { Project } from '../../types/kanban';
@@ -352,23 +351,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </div>
               </SortableContext>
 
-              {createPortal(
-                <DragOverlay>
-                  {activeSidebarProject ? (
-                    <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-sm bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/80 dark:border-slate-700/80 text-slate-900 dark:text-slate-100 ring-1 ring-blue-500/40 scale-105 select-none pointer-events-none w-52">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <Circle
-                          size={8}
-                          className={`fill-current ${getColorStyles(activeSidebarProject.color).text} shrink-0`}
-                        />
-                        <span className="truncate flex-1 font-semibold text-slate-900 dark:text-slate-100">{activeSidebarProject.name}</span>
-                      </div>
-                      <GripVertical size={13} className="text-slate-400 dark:text-slate-400 shrink-0" />
+              <DragOverlay>
+                {activeSidebarProject ? (
+                  <div className="drag-overlay-pill flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-sm shadow-2xl ring-1 ring-blue-500/40 scale-105 select-none pointer-events-none w-52">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <Circle
+                        size={8}
+                        className={`fill-current ${getColorStyles(activeSidebarProject.color).text} shrink-0`}
+                      />
+                      <span className="truncate flex-1 font-semibold">{activeSidebarProject.name}</span>
                     </div>
-                  ) : null}
-                </DragOverlay>,
-                document.body
-              )}
+                    <GripVertical size={13} className="text-slate-400 shrink-0" />
+                  </div>
+                ) : null}
+              </DragOverlay>
             </DndContext>
           </div>
         </nav>

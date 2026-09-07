@@ -7,8 +7,10 @@ import { Button } from '../ui/Button';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { Select } from '../ui/Select';
 import { useKanbanStore } from '../../store/useKanbanStore';
-import { Trash2, Plus, X, Link2, Tag, ExternalLink, Archive, ArchiveRestore } from 'lucide-react';
+import { Trash2, Archive, ArchiveRestore } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { TaskTagsEditor } from './TaskTagsEditor';
+import { TaskLinksEditor } from './TaskLinksEditor';
 
 interface TaskModalProps {
   task: Task | null;
@@ -17,38 +19,33 @@ interface TaskModalProps {
   clickedTaskRect?: { top: number; left: number; width: number; height: number } | null;
 }
 
-export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, clickedTaskRect }) => {
+interface TaskModalContentProps {
+  task: Task;
+  onClose: () => void;
+  clickedTaskRect?: { top: number; left: number; width: number; height: number } | null;
+}
+
+const TaskModalContent: React.FC<TaskModalContentProps> = ({
+  task,
+  onClose,
+  clickedTaskRect,
+}) => {
   const { t } = useTranslation();
   const { updateTask, deleteTask, projects } = useKanbanStore();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [links, setLinks] = useState<string[]>([]);
-  const [deadline, setDeadline] = useState('');
-
-  const [newTag, setNewTag] = useState('');
-  const [newLink, setNewLink] = useState('');
+  const [title, setTitle] = useState(task.title || '');
+  const [description, setDescription] = useState(task.description || '');
+  const [projectId, setProjectId] = useState(task.projectId || '');
+  const [tags, setTags] = useState<string[]>(task.tags || []);
+  const [links, setLinks] = useState<string[]>(task.links || []);
+  const [deadline, setDeadline] = useState(task.deadline || '');
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const [modalStyle, setModalStyle] = useState<React.CSSProperties | undefined>(undefined);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Populate state when task is loaded
   useEffect(() => {
-    if (task) {
-      setTitle(task.title || '');
-      setDescription(task.description || '');
-      setTags(task.tags || []);
-      setLinks(task.links || []);
-      setDeadline(task.deadline || '');
-      setProjectId(task.projectId || '');
-    }
-  }, [task, isOpen]);
-
-  useEffect(() => {
-    if (isOpen && clickedTaskRect && contentRef.current) {
+    if (clickedTaskRect && contentRef.current) {
       const estimatedHeight = contentRef.current.offsetHeight + 80;
       const estimatedWidth = Math.max(340, clickedTaskRect.width);
 
@@ -80,9 +77,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
     } else {
       setModalStyle(undefined);
     }
-  }, [isOpen, clickedTaskRect, task, tags, links]);
-
-  if (!task) return null;
+  }, [clickedTaskRect, tags, links]);
 
   const handleSave = () => {
     if (!title.trim()) return;
@@ -97,10 +92,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
     onClose();
   };
 
-  const handleDelete = () => {
-    setIsDeleteConfirmOpen(true);
-  };
-
   const handleConfirmDelete = () => {
     deleteTask(task.id);
     onClose();
@@ -109,37 +100,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
   const handleArchive = () => {
     updateTask(task.id, { archived: !task.archived });
     onClose();
-  };
-
-  const handleAddTag = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanTag = newTag.trim();
-    if (cleanTag && !tags.includes(cleanTag)) {
-      setTags([...tags, cleanTag]);
-      setNewTag('');
-    }
-  };
-
-  const handleRemoveTag = (indexToRemove: number) => {
-    setTags(tags.filter((_, idx) => idx !== indexToRemove));
-  };
-
-  const handleAddLink = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanLink = newLink.trim();
-    if (cleanLink && !links.includes(cleanLink)) {
-      // Basic protocol check
-      let formattedLink = cleanLink;
-      if (!/^https?:\/\//i.test(cleanLink)) {
-        formattedLink = `https://${cleanLink}`;
-      }
-      setLinks([...links, formattedLink]);
-      setNewLink('');
-    }
-  };
-
-  const handleRemoveLink = (indexToRemove: number) => {
-    setLinks(links.filter((_, idx) => idx !== indexToRemove));
   };
 
   const headerActions = (
@@ -158,7 +118,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
       </button>
       <button
         type="button"
-        onClick={handleDelete}
+        onClick={() => setIsDeleteConfirmOpen(true)}
         className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer flex items-center justify-center"
         title={t('delete')}
       >
@@ -178,151 +138,68 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
   return (
     <>
       <Modal
-        isOpen={isOpen}
+        isOpen={true}
         onClose={onClose}
         title={t('task_details')}
         style={combinedStyle}
         headerActions={headerActions}
       >
-      <div ref={contentRef} className="flex flex-col gap-5 text-left">
-        
-        {/* Task Title */}
-        <Input
-          label={t('task_title')}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={t('task_title')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              handleSave();
-            }
-          }}
-          autoFocus
-          required
-        />
+        <div ref={contentRef} className="flex flex-col gap-5 text-left">
+          {/* Task Title */}
+          <Input
+            label={t('task_title')}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t('task_title')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSave();
+              }
+            }}
+            autoFocus
+            required
+          />
 
-        {/* Task Description */}
-        <Textarea
-          label={t('task_description')}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder={t('task_description')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-              e.preventDefault();
-              handleSave();
-            }
-          }}
-          rows={4}
-        />
+          {/* Task Description */}
+          <Textarea
+            label={t('task_description')}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t('task_description')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                handleSave();
+              }
+            }}
+            rows={4}
+          />
 
-        {/* Project Selection */}
-        <Select
-          label={t('project')}
-          value={projectId}
-          onChange={(e) => setProjectId(e.target.value)}
-          options={projects.map((p) => ({
-            value: p.id,
-            label: p.name,
-          }))}
-        />
+          {/* Project Selection */}
+          <Select
+            label={t('project')}
+            value={projectId}
+            onChange={(e) => setProjectId(e.target.value)}
+            options={projects.map((p) => ({
+              value: p.id,
+              label: p.name,
+            }))}
+          />
 
-        {/* Task Deadline */}
-        <Input
-          label={t('deadline') || 'Deadline'}
-          type="date"
-          value={deadline}
-          onChange={(e) => setDeadline(e.target.value)}
-        />
+          {/* Task Deadline */}
+          <Input
+            label={t('deadline') || 'Deadline'}
+            type="date"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+          />
 
-        {/* Tags Section */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-            <Tag size={13} />
-            {t('tags')}
-          </label>
-          <div className="flex flex-wrap gap-1.5 mb-1 max-h-24 overflow-y-auto">
-            {tags.map((tag, idx) => (
-              <span
-                key={idx}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border"
-                style={{
-                  borderColor: 'color-mix(in srgb, var(--project-color, var(--color-blue-500)) 30%, transparent)',
-                  backgroundColor: 'color-mix(in srgb, var(--project-color, var(--color-blue-500)) 10%, transparent)',
-                  color: 'var(--project-color, var(--color-blue-600))',
-                }}
-              >
-                {tag}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(idx)}
-                  className="hover:text-red-500 rounded-full cursor-pointer inline-flex items-center justify-center"
-                >
-                  <X size={10} />
-                </button>
-              </span>
-            ))}
-          </div>
-          <form onSubmit={handleAddTag} className="flex gap-2">
-            <input
-              type="text"
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              placeholder={t('add_tag')}
-              className="glass-input flex-1 px-3 py-1.5 rounded-lg text-xs"
-            />
-            <Button type="submit" variant="secondary" size="sm">
-              <Plus size={14} />
-            </Button>
-          </form>
-        </div>
+          {/* Tags Section */}
+          <TaskTagsEditor tags={tags} onChangeTags={setTags} />
 
-        {/* Links Section */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-            <Link2 size={13} />
-            {t('links')}
-          </label>
-          <div className="space-y-1.5 max-h-24 overflow-y-auto mb-1">
-            {links.map((link, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/30"
-              >
-                <a
-                  href={link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:underline flex items-center gap-1.5 truncate pr-2 font-semibold"
-                  style={{ color: 'var(--project-color, var(--color-blue-600))' }}
-                >
-                  <ExternalLink size={11} className="flex-shrink-0" />
-                  <span className="truncate">{link}</span>
-                </a>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveLink(idx)}
-                  className="text-slate-400 hover:text-red-500 cursor-pointer"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
-          <form onSubmit={handleAddLink} className="flex gap-2">
-            <input
-              type="text"
-              value={newLink}
-              onChange={(e) => setNewLink(e.target.value)}
-              placeholder="example.com"
-              className="glass-input flex-1 px-3 py-1.5 rounded-lg text-xs"
-            />
-            <Button type="submit" variant="secondary" size="sm">
-              <Plus size={14} />
-            </Button>
-          </form>
-        </div>
+          {/* Links Section */}
+          <TaskLinksEditor links={links} onChangeLinks={setLinks} />
 
           {/* Modal Action Footer */}
           <div className="flex justify-end gap-2 mt-2 pt-2">
@@ -333,18 +210,35 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, cli
               {t('save')}
             </Button>
           </div>
+        </div>
+      </Modal>
 
-      </div>
-    </Modal>
-    
-    <ConfirmModal
-      isOpen={isDeleteConfirmOpen}
-      onClose={() => setIsDeleteConfirmOpen(false)}
-      onConfirm={handleConfirmDelete}
-      title={t('delete')}
-      message={t('confirm_delete_task')}
-      confirmText={t('delete')}
-    />
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title={t('delete')}
+        message={t('confirm_delete_task')}
+        confirmText={t('delete')}
+      />
     </>
+  );
+};
+
+export const TaskModal: React.FC<TaskModalProps> = ({
+  task,
+  isOpen,
+  onClose,
+  clickedTaskRect,
+}) => {
+  if (!isOpen || !task) return null;
+
+  return (
+    <TaskModalContent
+      key={task.id}
+      task={task}
+      onClose={onClose}
+      clickedTaskRect={clickedTaskRect}
+    />
   );
 };

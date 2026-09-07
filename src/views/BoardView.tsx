@@ -2,14 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useKanbanStore } from '../store/useKanbanStore';
-import type { Task, TaskStatus } from '../types/kanban';
+import type { Task, TaskStatus, ProjectBackground } from '../types/kanban';
 import { Column } from '../components/Board/Column';
 import { TaskModal } from '../components/Board/TaskModal';
-import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
-import { ColorPicker } from '../components/ui/ColorPicker';
-import { Button } from '../components/ui/Button';
-import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { BoardHeader } from '../components/Board/BoardHeader';
+import { EditProjectModal } from '../components/Board/EditProjectModal';
+import { ProjectArchiveModal } from '../components/Board/ProjectArchiveModal';
 import {
   DndContext,
   PointerSensor,
@@ -22,9 +20,6 @@ import {
 import type { DragStartEvent, DragOverEvent } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useTranslation } from 'react-i18next';
-import { Edit, Trash2, Check, Archive, ArchiveRestore } from 'lucide-react';
-import { getColorStyles } from '../utils/colors';
-import { BACKGROUND_IMAGES } from '../utils/backgrounds';
 
 export const BoardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -42,7 +37,6 @@ export const BoardView: React.FC = () => {
     updateProject,
     deleteProject,
     updateTask,
-    deleteTask,
   } = useKanbanStore();
 
   const project = projects.find((p) => p.id === id);
@@ -52,54 +46,22 @@ export const BoardView: React.FC = () => {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [clickedTaskRect, setClickedTaskRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [activeId, setActiveId] = useState<string | null>(null);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
-  const [isDeleteTaskConfirmOpen, setIsDeleteTaskConfirmOpen] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
-  // Project Edit fields
-  const [editName, setEditName] = useState('');
-  const [editColor, setEditColor] = useState('blue-500');
-  const [editBgType, setEditBgType] = useState<'theme' | 'solid' | 'image' | 'custom'>('theme');
-  const [editBgValue, setEditBgValue] = useState('');
-  const [editCustomId, setEditCustomId] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [editDeadline, setEditDeadline] = useState('');
+  // Filter tasks for this project
+  const projectTasks = tasks.filter((t) => t.projectId === id && !t.archived);
 
   // Update lastOpenedProject on mount/id change
   useEffect(() => {
     if (id && project) {
       setLastOpenedProject(id);
-      setEditName(project.name);
-      setEditColor(project.color);
-      setEditBgType(project.background?.type || 'theme');
-      setEditBgValue(project.background?.value || '');
-      setEditCustomId(project.customId || '');
-      setEditDescription(project.description || '');
-      setEditDeadline(project.deadline || '');
     } else if (id && !project) {
       // If project doesn't exist, reset last opened and redirect to home
       setLastOpenedProject(null);
       navigate('/', { replace: true });
     }
   }, [id, project, setLastOpenedProject, navigate]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5, // 5px drag threshold allows normal clicks to pass through
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  if (!project || !id) return null;
-
-  // Filter tasks for this project
-  const projectTasks = tasks.filter((t) => t.projectId === id && !t.archived);
 
   // Pre-open task modal if `task` query parameter is present
   useEffect(() => {
@@ -114,6 +76,20 @@ export const BoardView: React.FC = () => {
       }
     }
   }, [searchParams, projectTasks]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // 5px drag threshold allows normal clicks to pass through
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // If project doesn't exist, return early (all hooks have been called)
+  if (!project || !id) return null;
 
   // Group tasks by status
   const tasksByStatus = {
@@ -167,7 +143,7 @@ export const BoardView: React.FC = () => {
       links: [],
     }, position);
   };
-  
+
   const handleArchiveAllDone = () => {
     const doneTasks = tasks.filter((t) => t.projectId === id && t.status === 'DONE' && !t.archived);
     doneTasks.forEach((t) => {
@@ -187,71 +163,52 @@ export const BoardView: React.FC = () => {
     setIsTaskModalOpen(true);
   };
 
-  const handleSaveProjectDetails = () => {
-    if (!editName.trim()) return;
+  const handleSaveProject = (data: {
+    name: string;
+    color: string;
+    background: ProjectBackground;
+    customId?: string;
+    description?: string;
+    deadline?: string;
+  }) => {
     updateProject(
       id,
-      editName.trim(),
-      editColor,
-      { type: editBgType, value: editBgValue },
-      editCustomId.trim() || undefined,
-      editDescription.trim() || undefined,
-      editDeadline.trim() || undefined
+      data.name,
+      data.color,
+      data.background,
+      data.customId,
+      data.description,
+      data.deadline
     );
-    setIsEditProjectOpen(false);
   };
 
-  const handleDeleteProjectDetails = () => {
-    setIsDeleteConfirmOpen(true);
-  };
-
-  const handleConfirmDeleteProject = () => {
+  const handleDeleteProject = () => {
     deleteProject(id);
     navigate('/');
   };
 
-  const colorStyles = getColorStyles(project.color);
-  const hasBgImage = project.background && (project.background.type === 'image' || project.background.type === 'custom');
+  const handleCloseTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setSelectedTask(null);
+    setClickedTaskRect(null);
+    if (searchParams.has('task')) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('task');
+      setSearchParams(newParams, { replace: true });
+    }
+  };
 
   return (
     <div
       className="flex flex-col gap-6 h-full animate-fade-in"
       style={{ '--project-color': `var(--color-${project.color})` } as React.CSSProperties}
     >
-      
       {/* Board Header Banner */}
-      <div className={`p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all duration-300 ${
-        hasBgImage ? 'board-header-glass' : 'glass-panel'
-      }`}>
-        <div className="flex items-center gap-3">
-          <div className={`w-3.5 h-3.5 rounded-full ${colorStyles.bg}`} />
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
-            {project.name}
-          </h2>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setIsArchiveOpen(true)}
-            className="flex items-center gap-1.5"
-          >
-            <Archive size={14} />
-            {t('see_archive')}
-          </Button>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setIsEditProjectOpen(true)}
-            className="flex items-center gap-1.5"
-          >
-            <Edit size={14} />
-            {t('edit_project')}
-          </Button>
-        </div>
-      </div>
+      <BoardHeader
+        project={project}
+        onOpenArchive={() => setIsArchiveOpen(true)}
+        onOpenEdit={() => setIsEditProjectOpen(true)}
+      />
 
       {/* Board Drag and Drop Content */}
       <DndContext
@@ -285,6 +242,7 @@ export const BoardView: React.FC = () => {
             onArchiveAllDone={handleArchiveAllDone}
           />
         </div>
+
         {createPortal(
           <DragOverlay>
             {activeId ? (
@@ -302,350 +260,28 @@ export const BoardView: React.FC = () => {
         task={selectedTask}
         isOpen={isTaskModalOpen}
         clickedTaskRect={clickedTaskRect}
-        onClose={() => {
-          setIsTaskModalOpen(false);
-          setSelectedTask(null);
-          setClickedTaskRect(null);
-          if (searchParams.has('task')) {
-            const newParams = new URLSearchParams(searchParams);
-            newParams.delete('task');
-            setSearchParams(newParams, { replace: true });
-          }
-        }}
+        onClose={handleCloseTaskModal}
       />
 
       {/* Edit Project Modal */}
-      <Modal
+      <EditProjectModal
+        project={project}
         isOpen={isEditProjectOpen}
         onClose={() => setIsEditProjectOpen(false)}
-        title={t('edit_project')}
-        overflowVisible={true}
-      >
-        <div className="flex flex-col gap-5 text-left">
-          <div className="flex items-end gap-2.5">
-            <div className="flex-1">
-              <Input
-                label={t('project_name')}
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder={t('project_name')}
-                required
-              />
-            </div>
-            <ColorPicker
-              value={editColor}
-              onChange={setEditColor}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label={t('board_id') || 'Board ID / Code'}
-              value={editCustomId}
-              onChange={(e) => setEditCustomId(e.target.value)}
-              placeholder={t('board_id_placeholder') || 'e.g., WRK-001-ALPHA'}
-            />
-            <Input
-              label={t('deadline') || 'Deadline'}
-              type="date"
-              value={editDeadline}
-              onChange={(e) => setEditDeadline(e.target.value)}
-            />
-          </div>
-
-          <Input
-            label={t('description_label') || 'Description / Subtitle'}
-            value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
-            placeholder={t('description_placeholder') || 'e.g., Current Focus'}
-          />
-
-          {/* Background Selection Section */}
-          <div className="flex flex-col gap-3.5 pt-3 border-t border-slate-200/50 dark:border-slate-800/30">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-350 uppercase tracking-wider">
-              {t('project_background') || 'Project Background'}
-            </label>
-            
-            {/* Segmented control for Type */}
-            <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/40">
-              {(['theme', 'solid', 'image', 'custom'] as const).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => {
-                    setEditBgType(type);
-                    if (type === 'theme') {
-                      setEditBgValue('');
-                    } else if (type === 'solid' && !editBgValue.startsWith('#')) {
-                      setEditBgValue('#3b82f6');
-                    } else if (type === 'image' && !['cat', 'cocodrile', 'fields', 'moon', 'sunset', 'sunshines'].includes(editBgValue)) {
-                      setEditBgValue('sunset');
-                    } else if (type === 'custom' && editBgValue.startsWith('#')) {
-                      setEditBgValue('');
-                    }
-                  }}
-                  className={`py-1.5 px-1 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 ${
-                    editBgType === type
-                      ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-250'
-                  }`}
-                >
-                  {type === 'theme' && (t('theme') || 'Theme')}
-                  {type === 'solid' && (t('solid') || 'Solid')}
-                  {type === 'image' && (t('image') || 'Image')}
-                  {type === 'custom' && (t('custom') || 'URL')}
-                </button>
-              ))}
-            </div>
-
-            {/* Sub-inputs based on Type */}
-            {editBgType === 'theme' && (
-              <p className="text-2xs text-slate-500 dark:text-slate-450 italic">
-                {t('reset_bg_desc')}
-              </p>
-            )}
-
-            {editBgType === 'solid' && (
-              <div className="flex items-center gap-3 animate-fade-in">
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-xl border border-slate-300 dark:border-slate-700 overflow-hidden shadow-xs hover:scale-105 active:scale-95 transition-all">
-                  <input
-                    type="color"
-                    value={editBgValue.startsWith('#') ? editBgValue : '#3b82f6'}
-                    onChange={(e) => setEditBgValue(e.target.value)}
-                    className="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer scale-150"
-                  />
-                </div>
-                <div className="flex-1">
-                  <Input
-                    value={editBgValue}
-                    onChange={(e) => setEditBgValue(e.target.value)}
-                    placeholder="#3b82f6"
-                    className="font-mono text-xs"
-                  />
-                </div>
-              </div>
-            )}
-
-            {editBgType === 'image' && (
-              <div className="flex flex-col gap-2.5 animate-fade-in">
-                <div className="grid grid-cols-3 gap-2 max-h-[160px] overflow-y-auto p-0.5">
-                  {Object.entries(BACKGROUND_IMAGES).map(([name, url]) => {
-                    const isSelected = editBgValue === name;
-                    return (
-                      <button
-                        key={name}
-                        type="button"
-                        onClick={() => setEditBgValue(name)}
-                        className={`relative aspect-video rounded-lg overflow-hidden border-2 cursor-pointer transition-all duration-205 active:scale-95 shadow-xs group ${
-                          isSelected
-                            ? 'border-blue-600 dark:border-blue-400 ring-2 ring-blue-500/20'
-                            : 'border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700'
-                        }`}
-                        title={name}
-                      >
-                        <img
-                          src={url}
-                          alt={name}
-                          className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:opacity-90"
-                        />
-                        <div className="absolute inset-x-0 bottom-0 bg-slate-950/60 py-0.5 text-center">
-                          <span className="text-4xs font-bold text-white uppercase tracking-wider truncate block px-0.5">
-                            {name}
-                          </span>
-                        </div>
-                        {isSelected && (
-                          <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-white shadow-xs">
-                            <Check size={8} strokeWidth={3} />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-                
-                {/* Unsplash Profile link */}
-                <p className="text-2xs text-slate-500 dark:text-slate-400 flex items-center gap-1 flex-wrap mt-0.5">
-                  <span>{t('unsplash_profile_hint')}</span>
-                  <a
-                    href="https://unsplash.com/@javchz"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-blue-600 dark:text-blue-450 hover:underline inline-flex items-center gap-0.5"
-                  >
-                    <span>@javchz</span>
-                  </a>
-                </p>
-              </div>
-            )}
-
-            {editBgType === 'custom' && (
-              <div className="flex flex-col gap-2 animate-fade-in">
-                <Input
-                  label={t('custom_img_url')}
-                  value={editBgValue}
-                  onChange={(e) => setEditBgValue(e.target.value)}
-                  placeholder={t('custom_img_placeholder')}
-                  required
-                />
-                {editBgValue && (
-                  <div className="mt-1 rounded-xl border border-slate-200/50 dark:border-slate-800/30 p-1.5 bg-slate-100/50 dark:bg-slate-900/30 flex items-center justify-center max-h-[120px] overflow-hidden">
-                    <img
-                      src={editBgValue}
-                      alt={t('url_preview')}
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = 'none';
-                      }}
-                      className="max-h-[100px] rounded-lg object-contain"
-                    />
-                  </div>
-                )}
-                {/* Unsplash Profile credit */}
-                <p className="text-2xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1 flex-wrap">
-                  <span>{t('unsplash_profile_credit')}</span>
-                  <a
-                    href="https://unsplash.com/@javchz"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-blue-600 dark:text-blue-450 hover:underline"
-                  >
-                    Unsplash (@javchz)
-                  </a>
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-800/30">
-            <Button
-              type="button"
-              variant="danger"
-              onClick={handleDeleteProjectDetails}
-              className="flex items-center gap-1.5"
-            >
-              <Trash2 size={14} />
-              {t('delete')}
-            </Button>
-            
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setIsEditProjectOpen(false)}
-              >
-                {t('cancel')}
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={handleSaveProjectDetails}
-              >
-                {t('save')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Delete Project Confirmation Modal */}
-      <ConfirmModal
-        isOpen={isDeleteConfirmOpen}
-        onClose={() => setIsDeleteConfirmOpen(false)}
-        onConfirm={handleConfirmDeleteProject}
-        title={t('delete_project')}
-        message={t('confirm_delete_project')}
-        confirmText={t('delete')}
+        onSave={handleSaveProject}
+        onDelete={handleDeleteProject}
       />
 
       {/* Project Archive Modal */}
-      <Modal
+      <ProjectArchiveModal
+        projectId={id}
         isOpen={isArchiveOpen}
         onClose={() => setIsArchiveOpen(false)}
-        title={t('archive_title')}
-      >
-        <div className="flex flex-col gap-4 text-left max-h-[450px] overflow-y-auto pr-1">
-          {tasks.filter((t) => t.projectId === id && t.archived).length === 0 ? (
-            <div className="py-12 text-center text-slate-500 dark:text-slate-400 italic">
-              {t('no_archived_tasks')}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {tasks
-                .filter((t) => t.projectId === id && t.archived)
-                .map((task) => (
-                  <div
-                    key={task.id}
-                    className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-800/30 bg-slate-50/50 dark:bg-slate-900/30 hover:bg-slate-100/50 dark:hover:bg-slate-850/40 transition-colors"
-                  >
-                    <div
-                      className="flex-1 min-w-0 cursor-pointer"
-                      onClick={() => {
-                        setSelectedTask(task);
-                        setIsTaskModalOpen(true);
-                      }}
-                    >
-                      <span className="font-semibold text-sm text-slate-800 dark:text-slate-100 block truncate hover:text-blue-650 dark:hover:text-blue-400">
-                        {task.title}
-                      </span>
-                      {task.description && (
-                        <span className="text-xs text-slate-550 dark:text-slate-400 block truncate mt-0.5">
-                          {task.description}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => updateTask(task.id, { archived: false })}
-                        className="flex items-center gap-1 hover:text-green-600 dark:hover:text-green-400"
-                        title={t('unarchive')}
-                      >
-                        <ArchiveRestore size={12} />
-                        <span className="hidden sm:inline text-2xs">{t('unarchive')}</span>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="danger"
-                        size="sm"
-                        onClick={() => {
-                          setTaskToDelete(task.id);
-                          setIsDeleteTaskConfirmOpen(true);
-                        }}
-                        className="flex items-center gap-1"
-                        title={t('delete')}
-                      >
-                        <Trash2 size={12} />
-                        <span className="hidden sm:inline text-2xs">{t('delete')}</span>
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-      </Modal>
-
-      {/* Delete Task Confirmation Modal from Archive */}
-      <ConfirmModal
-        isOpen={isDeleteTaskConfirmOpen}
-        onClose={() => {
-          setIsDeleteTaskConfirmOpen(false);
-          setTaskToDelete(null);
+        onSelectTask={(task) => {
+          setSelectedTask(task);
+          setIsTaskModalOpen(true);
         }}
-        onConfirm={() => {
-          if (taskToDelete) {
-            deleteTask(taskToDelete);
-            setTaskToDelete(null);
-          }
-          setIsDeleteTaskConfirmOpen(false);
-        }}
-        title={t('delete')}
-        message={t('confirm_delete_task')}
-        confirmText={t('delete')}
       />
-
     </div>
   );
 };

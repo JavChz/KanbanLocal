@@ -10,17 +10,18 @@ export const RedirectGuard: React.FC<RedirectGuardProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { lastOpenedProject, projects } = useKanbanStore();
-  const isInitialMount = useRef(true);
+  const hasChecked = useRef(false);
 
   useEffect(() => {
-    if (isInitialMount.current && location.pathname === '/') {
-      isInitialMount.current = false;
-      if (lastOpenedProject && projects.some((p) => p.id === lastOpenedProject)) {
-        // Replace history entry to prevent back-button redirect loops
+    if (!hasChecked.current) {
+      hasChecked.current = true;
+      if (location.pathname === '/' && lastOpenedProject && projects.some((p) => p.id === lastOpenedProject)) {
+        // Replace history entry on startup to prevent back-button redirect loops
         navigate(`/project/${lastOpenedProject}`, { replace: true });
       }
     }
-  }, [location.pathname, lastOpenedProject, projects, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run check once on initial application mount
 
   return <>{children}</>;
 };

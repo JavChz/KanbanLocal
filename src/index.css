@@ -143,13 +143,12 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   animation: modalEntrance 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Premium Frozen Glass styling with project-colored bottom borders */
+/* Premium Frozen Glass styling */
 
 .board-header-glass {
   position: relative;
   background: transparent !important;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-bottom: 3.5px solid color-mix(in srgb, var(--project-color, #3b82f6) 55%, transparent) !important;
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
   z-index: 1;
 }
@@ -168,7 +167,6 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 
 html.dark .board-header-glass {
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 3.5px solid color-mix(in srgb, var(--project-color, #3b82f6) 65%, transparent) !important;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
 }
 
@@ -209,7 +207,6 @@ html.dark body.has-bg-image::after {
   position: relative;
   background: transparent !important;
   border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  border-bottom: 4px solid color-mix(in srgb, var(--project-color, #3b82f6) 45%, transparent) !important;
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.06) !important;
   z-index: 1;
 }
@@ -228,7 +225,6 @@ html.dark body.has-bg-image::after {
 
 html.dark .has-bg-image .board-column {
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-bottom: 4px solid color-mix(in srgb, var(--project-color, #3b82f6) 60%, transparent) !important;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
@@ -240,7 +236,6 @@ html.dark .has-bg-image .board-column::before {
   position: relative;
   background: transparent !important;
   border: 1px solid rgba(255, 255, 255, 0.35) !important;
-  border-bottom: 2px solid color-mix(in srgb, var(--project-color, #3b82f6) 35%, transparent) !important;
   box-shadow: 0 2px 8px 0 rgba(31, 38, 135, 0.03) !important;
   z-index: 1;
 }
@@ -260,7 +255,6 @@ html.dark .has-bg-image .board-column::before {
 
 html.dark .has-bg-image .glass-card {
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-bottom: 2px solid color-mix(in srgb, var(--project-color, #3b82f6) 45%, transparent) !important;
   box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.2) !important;
 }
 

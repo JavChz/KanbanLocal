@@ -221,9 +221,7 @@ export const BoardView: React.FC = () => {
       
       {/* Board Header Banner */}
       <div className={`p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all duration-300 ${
-        hasBgImage
-          ? 'board-header-glass'
-          : `border ${colorStyles.border} ${colorStyles.bgLight}`
+        hasBgImage ? 'board-header-glass' : 'glass-panel'
       }`}>
         <div className="flex items-center gap-3">
           <div className={`w-3.5 h-3.5 rounded-full ${colorStyles.bg}`} />

@@ -136,7 +136,7 @@ const ProjectCardContent: React.FC<ProjectCardContentProps> = ({
             <span>{doneCount} / {projTasks.length} Done</span>
           </div>
 
-          <div className="w-full h-1.5 bg-slate-200/50 dark:bg-slate-850 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-slate-200/50 dark:bg-slate-800 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${progressBarColor}`}
               style={{ width: `${projCompletionRate}%` }}
@@ -480,7 +480,7 @@ export const HomeView: React.FC = () => {
             <DragOverlay>
               {activeProject ? (
                 <div
-                  className={`h-48 w-80 glass-card p-5 rounded-2xl flex flex-col justify-between text-left border-l-4 ${
+                  className={`h-48 w-80 glass-card bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 p-5 rounded-2xl flex flex-col justify-between text-left border-l-4 ${
                     getColorStyles(activeProject.color).border
                   } shadow-2xl scale-105 rotate-1 pointer-events-none relative overflow-hidden select-none`}
                 >

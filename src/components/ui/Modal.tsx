@@ -8,10 +8,21 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   overflowVisible?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
   style?: React.CSSProperties;
+  className?: string;
+  contentClassName?: string;
   headerActions?: React.ReactNode;
 }
+
+const sizeClasses: Record<string, string> = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+  '2xl': 'max-w-5xl w-[94vw]',
+  full: 'max-w-[96vw] w-[96vw]',
+};
 
 export const Modal: React.FC<ModalProps> = ({
   isOpen,
@@ -21,6 +32,8 @@ export const Modal: React.FC<ModalProps> = ({
   overflowVisible,
   size = 'md',
   style,
+  className = '',
+  contentClassName = '',
   headerActions,
 }) => {
   // Lock body scroll when modal is open
@@ -63,9 +76,14 @@ export const Modal: React.FC<ModalProps> = ({
       />
 
       {/* Modal Container */}
-      <div style={style} className={`relative w-full ${size === 'lg' ? 'max-w-2xl' : size === 'sm' ? 'max-w-sm' : 'max-w-md'} glass-panel p-6 rounded-2xl shadow-2xl z-10 flex flex-col gap-4 animate-modal-entrance scale-100 max-h-[90vh] ${overflowVisible ? 'overflow-visible' : 'overflow-y-auto'}`}>
+      <div
+        style={style}
+        className={`relative w-full ${sizeClasses[size] || 'max-w-md'} glass-panel p-6 rounded-2xl shadow-2xl z-10 flex flex-col gap-4 animate-modal-entrance scale-100 max-h-[90vh] transition-all duration-200 ${
+          overflowVisible ? 'overflow-visible' : 'overflow-y-auto'
+        } ${className}`}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between pb-1">
+        <div className="flex items-center justify-between pb-1 shrink-0">
           {title ? (
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
               {title}
@@ -86,7 +104,7 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="text-sm text-slate-600 dark:text-slate-300">
+        <div className={`text-sm text-slate-600 dark:text-slate-300 ${contentClassName}`}>
           {children}
         </div>
       </div>

@@ -78,7 +78,7 @@ export const Column: React.FC<ColumnProps> = ({
       />
 
       {/* Task List */}
-      <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto min-h-[250px]">
+      <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto min-h-[140px]">
         {/* Inline Task Form (Top) */}
         {isAdding && addingPosition === 'top' && (
           <ColumnTaskComposer
@@ -94,19 +94,22 @@ export const Column: React.FC<ColumnProps> = ({
             ))}
           </div>
         </SortableContext>
+      </div>
 
-        {/* Inline Task Form (Bottom) */}
-        {isAdding && addingPosition === 'bottom' && (
+      {/* Column Footer: Bottom Add Task Button or Composer */}
+      {isAdding && addingPosition === 'bottom' ? (
+        <div className="mt-2.5 pt-0.5">
           <ColumnTaskComposer
             onSave={handleSaveTask}
             onCancel={handleCancelTask}
           />
-        )}
-      </div>
-
-      {/* Bottom Add Task Button */}
-      {!isAdding && (
-        <AddTaskButton onClick={handleStartAddBottom} />
+        </div>
+      ) : (
+        !isAdding && (
+          <div className="mt-2.5 pt-0.5">
+            <AddTaskButton onClick={handleStartAddBottom} />
+          </div>
+        )
       )}
     </div>
   );

@@ -19,13 +19,16 @@ import {
 import {
   DndContext,
   useDroppable,
+  useDraggable,
   PointerSensor,
   useSensor,
   useSensors,
   DragOverlay,
   closestCorners,
+  pointerWithin,
+  rectIntersection,
 } from '@dnd-kit/core';
-import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
+import type { DragStartEvent, DragEndEvent, CollisionDetection } from '@dnd-kit/core';
 import { useKanbanStore } from '../store/useKanbanStore';
 import type { Task, TaskPriority, TaskStatus } from '../types/kanban';
 import { TaskModal } from '../components/Board/TaskModal';
@@ -102,6 +105,39 @@ const MatrixTaskCard: React.FC<MatrixTaskCardProps> = ({
           </span>
         )}
       </div>
+    </div>
+  );
+};
+
+// Draggable Task Card for Quadrants and Drawer
+const DraggableMatrixCard: React.FC<MatrixTaskCardProps> = (props) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: props.task.id,
+    data: { task: props.task },
+  });
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Prevent accidental click when dragging
+    if (transform && (Math.abs(transform.x) > 3 || Math.abs(transform.y) > 3)) {
+      return;
+    }
+    props.onClick(e);
+  };
+
+  const style: React.CSSProperties = {
+    opacity: isDragging ? 0.35 : 1,
+    cursor: isDragging ? 'grabbing' : 'grab',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="touch-none select-none"
+    >
+      <MatrixTaskCard {...props} isDragging={isDragging} onClick={handleClick} />
     </div>
   );
 };
@@ -194,7 +230,7 @@ const QuadrantContainer: React.FC<QuadrantContainerProps> = ({
           tasks.map((task) => {
             const projectInfo = projectsMap.get(task.projectId);
             return (
-              <MatrixTaskCard
+              <DraggableMatrixCard
                 key={task.id}
                 task={task}
                 projectName={projectInfo?.name}
@@ -216,6 +252,82 @@ const QuadrantContainer: React.FC<QuadrantContainerProps> = ({
         <Plus size={14} />
         <span>{t('add_task')}</span>
       </button>
+    </div>
+  );
+};
+
+// Droppable Unassigned Tasks Drawer (Triage Box)
+interface UnassignedDrawerProps {
+  tasks: Task[];
+  projectsMap: Map<string, { name: string; color: string }>;
+  isDraggingActive?: boolean;
+  onTaskClick: (task: Task) => void;
+  onOpenInProject: (projectId: string, taskId: string) => void;
+  onClose: () => void;
+}
+
+const UnassignedDrawer: React.FC<UnassignedDrawerProps> = ({
+  tasks,
+  projectsMap,
+  isDraggingActive = false,
+  onTaskClick,
+  onOpenInProject,
+  onClose,
+}) => {
+  const { t } = useTranslation();
+  const { setNodeRef, isOver } = useDroppable({ id: 'none' });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`glass-panel p-4 rounded-2xl border transition-all duration-200 flex flex-col gap-3 mt-2 ${
+        isOver
+          ? 'ring-2 ring-blue-500 bg-blue-500/20 dark:bg-blue-950/50 border-blue-400 scale-[1.005]'
+          : isDraggingActive
+          ? 'ring-2 ring-dashed ring-blue-400/50 border-blue-400/40 bg-blue-500/5'
+          : 'border-slate-200/60 dark:border-slate-800/50'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Inbox size={16} className="text-slate-500" />
+          <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200">
+            {t('unprioritized_inbox', 'Unprioritized Tasks')} ({tasks.length})
+          </h4>
+          <span className="text-2xs text-slate-400 italic">
+            {t('unprioritized_desc', 'Drag tasks into any quadrant to set priority')}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
+        >
+          {t('hide', 'Hide')}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto pr-1">
+        {tasks.length === 0 ? (
+          <div className="col-span-full py-6 text-center text-xs text-slate-400 dark:text-slate-500 italic border border-dashed border-slate-200 dark:border-slate-800/60 rounded-xl">
+            {t('all_tasks_prioritized', 'All tasks are prioritized. Drag tasks here to unprioritize.')}
+          </div>
+        ) : (
+          tasks.map((task) => {
+            const projectInfo = projectsMap.get(task.projectId);
+            return (
+              <DraggableMatrixCard
+                key={task.id}
+                task={task}
+                projectName={projectInfo?.name}
+                projectColor={projectInfo?.color}
+                onClick={() => onTaskClick(task)}
+                onOpenInProject={onOpenInProject}
+              />
+            );
+          })
+        )}
+      </div>
     </div>
   );
 };
@@ -267,31 +379,47 @@ export const MatrixView: React.FC = () => {
     const unassigned: Task[] = [];
 
     filteredTasks.forEach((task) => {
-      // Determine priority from priority field or urgency/importance flags
-      let p = task.priority;
-      if (!p || p === 'none') {
-        if (task.isUrgent && task.isImportant) p = 'urgent_important';
-        else if (!task.isUrgent && task.isImportant) p = 'not_urgent_important';
-        else if (task.isUrgent && !task.isImportant) p = 'urgent_not_important';
-        else if (task.isUrgent === false && task.isImportant === false) p = 'not_urgent_not_important';
+      // If priority is explicitly 'none', it is definitely unassigned/unprioritized
+      if (task.priority === 'none') {
+        unassigned.push(task);
+        return;
       }
 
-      switch (p) {
-        case 'urgent_important':
-          q1.push(task);
-          break;
-        case 'not_urgent_important':
-          q2.push(task);
-          break;
-        case 'urgent_not_important':
-          q3.push(task);
-          break;
-        case 'not_urgent_not_important':
-          q4.push(task);
-          break;
-        default:
-          unassigned.push(task);
-          break;
+      // If priority is set to one of the 4 quadrants, respect it directly
+      if (task.priority === 'urgent_important') {
+        q1.push(task);
+        return;
+      }
+      if (task.priority === 'not_urgent_important') {
+        q2.push(task);
+        return;
+      }
+      if (task.priority === 'urgent_not_important') {
+        q3.push(task);
+        return;
+      }
+      if (task.priority === 'not_urgent_not_important') {
+        q4.push(task);
+        return;
+      }
+
+      // Fallback only if priority was never set (e.g. legacy tasks with only boolean flags)
+      if (task.isUrgent === true && task.isImportant === true) {
+        q1.push(task);
+      } else if (task.isUrgent === false && task.isImportant === true) {
+        q2.push(task);
+      } else if (task.isUrgent === true && task.isImportant === false) {
+        q3.push(task);
+      } else if (
+        task.isUrgent === false &&
+        task.isImportant === false &&
+        task.isUrgent !== undefined &&
+        task.isImportant !== undefined &&
+        task.priority !== undefined
+      ) {
+        q4.push(task);
+      } else {
+        unassigned.push(task);
       }
     });
 
@@ -307,6 +435,19 @@ export const MatrixView: React.FC = () => {
     })
   );
 
+  // Multi-tier collision detection: pointerWithin first for fast, exact drawer/quadrant hit, then rectIntersection, fallback to closestCorners
+  const collisionDetectionStrategy: CollisionDetection = React.useCallback((args) => {
+    const pointerCollisions = pointerWithin(args);
+    if (pointerCollisions.length > 0) {
+      return pointerCollisions;
+    }
+    const rectCollisions = rectIntersection(args);
+    if (rectCollisions.length > 0) {
+      return rectCollisions;
+    }
+    return closestCorners(args);
+  }, []);
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveDragId(event.active.id as string);
   };
@@ -320,12 +461,20 @@ export const MatrixView: React.FC = () => {
     const taskId = active.id as string;
     const targetQuadrant = over.id as TaskPriority;
 
+    if (targetQuadrant === 'none') {
+      updateTask(taskId, {
+        priority: 'none',
+        isUrgent: undefined,
+        isImportant: undefined,
+      });
+      return;
+    }
+
     if (
       targetQuadrant === 'urgent_important' ||
       targetQuadrant === 'not_urgent_important' ||
       targetQuadrant === 'urgent_not_important' ||
-      targetQuadrant === 'not_urgent_not_important' ||
-      targetQuadrant === 'none'
+      targetQuadrant === 'not_urgent_not_important'
     ) {
       const flags = getFlagsFromPriority(targetQuadrant);
       updateTask(taskId, {
@@ -401,15 +550,17 @@ export const MatrixView: React.FC = () => {
           <span className="px-2.5 py-1 rounded-lg bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30">
             {t('quadrant_4_title', 'Later')}: {quadrantTasks.q4.length}
           </span>
-          {quadrantTasks.unassigned.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setShowUnassignedDrawer(!showUnassignedDrawer)}
-              className="px-2.5 py-1 rounded-lg bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 cursor-pointer hover:bg-slate-300/60"
-            >
-              {t('unprioritized_inbox', 'Inbox')}: {quadrantTasks.unassigned.length}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowUnassignedDrawer(!showUnassignedDrawer)}
+            className={`px-2.5 py-1 rounded-lg border transition-all cursor-pointer font-bold ${
+              showUnassignedDrawer
+                ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/40 shadow-xs'
+                : 'bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-300/60'
+            }`}
+          >
+            {t('unprioritized_inbox', 'Inbox')}: {quadrantTasks.unassigned.length}
+          </button>
         </div>
       </div>
 
@@ -464,7 +615,7 @@ export const MatrixView: React.FC = () => {
       {/* DndContext Wrapping the Matrix */}
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
@@ -552,43 +703,15 @@ export const MatrixView: React.FC = () => {
         </div>
 
         {/* Unprioritized Tasks Drawer (Triage Box) */}
-        {showUnassignedDrawer && quadrantTasks.unassigned.length > 0 && (
-          <div className="glass-panel p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/50 flex flex-col gap-3 mt-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Inbox size={16} className="text-slate-500" />
-                <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200">
-                  {t('unprioritized_inbox', 'Unprioritized Tasks')} ({quadrantTasks.unassigned.length})
-                </h4>
-                <span className="text-2xs text-slate-400 italic">
-                  {t('unprioritized_desc', 'Drag tasks into any quadrant to set priority')}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowUnassignedDrawer(false)}
-                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
-              >
-                {t('hide', 'Hide')}
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto pr-1">
-              {quadrantTasks.unassigned.map((task) => {
-                const projectInfo = projectsMap.get(task.projectId);
-                return (
-                  <MatrixTaskCard
-                    key={task.id}
-                    task={task}
-                    projectName={projectInfo?.name}
-                    projectColor={projectInfo?.color}
-                    onClick={() => handleOpenTask(task)}
-                    onOpenInProject={handleOpenInProject}
-                  />
-                );
-              })}
-            </div>
-          </div>
+        {(showUnassignedDrawer || activeDragId !== null) && (
+          <UnassignedDrawer
+            tasks={quadrantTasks.unassigned}
+            projectsMap={projectsMap}
+            isDraggingActive={activeDragId !== null}
+            onTaskClick={handleOpenTask}
+            onOpenInProject={handleOpenInProject}
+            onClose={() => setShowUnassignedDrawer(false)}
+          />
         )}
 
         {/* Drag Overlay */}

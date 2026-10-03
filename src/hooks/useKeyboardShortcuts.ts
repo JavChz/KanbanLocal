@@ -18,6 +18,10 @@ export const useKeyboardShortcuts = () => {
             e.preventDefault();
             navigate('/global');
             break;
+          case 'm':
+            e.preventDefault();
+            navigate('/matrix');
+            break;
           case 's':
             e.preventDefault();
             navigate('/settings');

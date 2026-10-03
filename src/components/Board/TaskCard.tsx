@@ -3,6 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Clock } from 'lucide-react';
 import type { Task } from '../../types/kanban';
+import { PriorityBadge } from '../ui/PriorityBadge';
 
 interface TaskCardProps {
   task: Task;
@@ -44,10 +45,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       }`}
     >
       <span className="text-left w-full break-words pr-2">{task.title}</span>
-      {task.deadline && (
-        <div className="flex items-center gap-1.5 text-[10px] text-slate-650 dark:text-slate-300 font-bold font-mono bg-slate-100 dark:bg-slate-900/60 px-1.5 py-0.5 rounded">
-          <Clock size={11} className="text-slate-405 dark:text-slate-500" />
-          <span>{task.deadline}</span>
+      {(task.deadline || (task.priority && task.priority !== 'none')) && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {task.priority && task.priority !== 'none' && (
+            <PriorityBadge priority={task.priority} compact />
+          )}
+          {task.deadline && (
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-650 dark:text-slate-300 font-bold font-mono bg-slate-100 dark:bg-slate-900/60 px-1.5 py-0.5 rounded">
+              <Clock size={11} className="text-slate-405 dark:text-slate-500" />
+              <span>{task.deadline}</span>
+            </div>
+          )}
         </div>
       )}
     </div>

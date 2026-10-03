@@ -4,6 +4,7 @@ import { Circle, ExternalLink } from 'lucide-react';
 import type { Task, Project } from '../../types/kanban';
 import { getColorStyles } from '../../utils/colors';
 import { StatusBadge } from '../ui/StatusBadge';
+import { PriorityBadge } from '../ui/PriorityBadge';
 
 interface GlobalTaskTableProps {
   tasks: Task[];
@@ -31,8 +32,9 @@ export const GlobalTaskTable: React.FC<GlobalTaskTableProps> = ({
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-slate-200/40 dark:bg-slate-900/30 text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-350 border-b border-slate-200 dark:border-slate-800">
-                <th className="px-5 py-3.5 text-left w-1/2">{t('task_title')}</th>
+                <th className="px-5 py-3.5 text-left w-2/5">{t('task_title')}</th>
                 <th className="px-5 py-3.5 text-left">{t('project')}</th>
+                <th className="px-5 py-3.5 text-left">{t('priority', 'Priority')}</th>
                 <th className="px-5 py-3.5 text-left">{t('status')}</th>
                 <th className="px-5 py-3.5 text-right w-16"></th>
               </tr>
@@ -70,6 +72,14 @@ export const GlobalTaskTable: React.FC<GlobalTaskTableProps> = ({
                         </div>
                       ) : (
                         <span className="italic text-slate-400">{t('none')}</span>
+                      )}
+                    </td>
+                    {/* Priority */}
+                    <td className="px-5 py-4">
+                      {task.priority && task.priority !== 'none' ? (
+                        <PriorityBadge priority={task.priority} />
+                      ) : (
+                        <span className="text-2xs text-slate-400 italic">—</span>
                       )}
                     </td>
                     {/* Status Tag */}

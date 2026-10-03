@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { Task } from '../../types/kanban';
+import type { Task, TaskPriority } from '../../types/kanban';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { TaskTagsEditor } from './TaskTagsEditor';
 import { TaskLinksEditor } from './TaskLinksEditor';
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
+import { TaskPrioritySelector } from './TaskPrioritySelector';
 
 interface TaskModalProps {
   task: Task | null;
@@ -39,6 +40,9 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   const [tags, setTags] = useState<string[]>(task.tags || []);
   const [links, setLinks] = useState<string[]>(task.links || []);
   const [deadline, setDeadline] = useState(task.deadline || '');
+  const [priority, setPriority] = useState<TaskPriority>(task.priority || 'none');
+  const [isUrgent, setIsUrgent] = useState<boolean>(task.isUrgent ?? (task.priority === 'urgent_important' || task.priority === 'urgent_not_important'));
+  const [isImportant, setIsImportant] = useState<boolean>(task.isImportant ?? (task.priority === 'urgent_important' || task.priority === 'not_urgent_important'));
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const [isExpanded, setIsExpanded] = useState<boolean>(() => {
@@ -121,6 +125,9 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
       links,
       deadline: deadline.trim() || undefined,
       projectId,
+      priority,
+      isUrgent,
+      isImportant,
     });
     onClose();
   };
@@ -235,6 +242,18 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                 onChange={(e) => setDeadline(e.target.value)}
               />
 
+              {/* Priority & Eisenhower Selector */}
+              <TaskPrioritySelector
+                priority={priority}
+                isUrgent={isUrgent}
+                isImportant={isImportant}
+                onChange={(p, u, i) => {
+                  setPriority(p);
+                  setIsUrgent(u);
+                  setIsImportant(i);
+                }}
+              />
+
               <TaskTagsEditor tags={tags} onChangeTags={setTags} />
 
               <TaskLinksEditor links={links} onChangeLinks={setLinks} />
@@ -320,6 +339,18 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
               type="date"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
+            />
+
+            {/* Priority & Eisenhower Selector */}
+            <TaskPrioritySelector
+              priority={priority}
+              isUrgent={isUrgent}
+              isImportant={isImportant}
+              onChange={(p, u, i) => {
+                setPriority(p);
+                setIsUrgent(u);
+                setIsImportant(i);
+              }}
             />
 
             {/* Tags Section */}

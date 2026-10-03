@@ -31,6 +31,7 @@ export const ShortcutsTab: React.FC = () => {
         <div className="flex flex-col gap-2 font-mono text-xs">
           <ShortcutRow keys="Ctrl + Alt + H" description={t('nav_home')} />
           <ShortcutRow keys="Ctrl + Alt + G" description={t('nav_global')} />
+          <ShortcutRow keys="Ctrl + Alt + M" description={t('nav_matrix', 'Eisenhower Matrix')} />
           <ShortcutRow keys="Ctrl + Alt + S" description={t('open_settings')} />
           <ShortcutRow keys="Ctrl + Alt + N" description={t('new_board_task')} isLast={true} />
         </div>

@@ -1,5 +1,12 @@
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
 
+export type TaskPriority =
+  | 'urgent_important'
+  | 'not_urgent_important'
+  | 'urgent_not_important'
+  | 'not_urgent_not_important'
+  | 'none';
+
 export interface Task {
   id: string;
   title: string;
@@ -10,6 +17,9 @@ export interface Task {
   links?: string[];
   deadline?: string;       // Deadline date (YYYY-MM-DD)
   archived?: boolean;      // Archiving status
+  priority?: TaskPriority; // Eisenhower Priority level
+  isUrgent?: boolean;      // Direct urgency flag
+  isImportant?: boolean;   // Direct importance flag
 }
 
 export interface ProjectBackground {

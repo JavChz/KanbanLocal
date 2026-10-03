@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useKanbanStore } from '../../store/useKanbanStore';
 import type { Project } from '../../types/kanban';
-import { Home, Globe, Settings, Plus, Circle, ChevronLeft, GripVertical } from 'lucide-react';
+import { Home, Globe, Settings, Plus, Circle, ChevronLeft, GripVertical, Layers } from 'lucide-react';
 import { AppLogo } from '../ui/AppLogo';
 import { useTranslation } from 'react-i18next';
 import { getColorStyles } from '../../utils/colors';
@@ -147,6 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { to: '/', icon: <Home size={18} />, label: t('home'), end: true },
     { to: '/global', icon: <Globe size={18} />, label: t('global_view') },
+    { to: '/matrix', icon: <Layers size={18} />, label: t('eisenhower_matrix', 'Eisenhower Matrix') },
   ];
 
   const handleCreateProjectClick = () => {

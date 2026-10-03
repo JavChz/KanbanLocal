@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
-import type { KanbanState, Task, Project, TaskStatus } from '../types/kanban';
+import type { KanbanState, Task, Project, TaskStatus, TaskPriority } from '../types/kanban';
+import { getPriorityFromFlags, getFlagsFromPriority } from '../utils/priority';
 
 export interface SettingsSlice {
   language: 'en' | 'fr' | 'ja' | 'es';
@@ -52,6 +53,29 @@ export const createSettingsSlice: StateCreator<
           ) {
             return false;
           }
+          let priority: TaskPriority | undefined = undefined;
+          if (
+            t.priority === 'urgent_important' ||
+            t.priority === 'not_urgent_important' ||
+            t.priority === 'urgent_not_important' ||
+            t.priority === 'not_urgent_not_important' ||
+            t.priority === 'none'
+          ) {
+            priority = t.priority;
+          }
+
+          let isUrgent = typeof t.isUrgent === 'boolean' ? t.isUrgent : undefined;
+          let isImportant = typeof t.isImportant === 'boolean' ? t.isImportant : undefined;
+
+          // Bidirectional sync: if priority is set but flags aren't, or vice-versa
+          if (priority && (isUrgent === undefined || isImportant === undefined)) {
+            const flags = getFlagsFromPriority(priority);
+            isUrgent = isUrgent ?? flags.isUrgent;
+            isImportant = isImportant ?? flags.isImportant;
+          } else if (!priority && (isUrgent !== undefined || isImportant !== undefined)) {
+            priority = getPriorityFromFlags(isUrgent, isImportant);
+          }
+
           validatedTasks.push({
             id: t.id,
             title: t.title,
@@ -60,7 +84,11 @@ export const createSettingsSlice: StateCreator<
             description: typeof t.description === 'string' ? t.description : undefined,
             tags: Array.isArray(t.tags) && t.tags.every((tag: unknown) => typeof tag === 'string') ? t.tags : [],
             links: Array.isArray(t.links) && t.links.every((l: unknown) => typeof l === 'string') ? t.links : [],
+            deadline: typeof t.deadline === 'string' ? t.deadline : undefined,
             archived: typeof t.archived === 'boolean' ? t.archived : undefined,
+            priority,
+            isUrgent,
+            isImportant,
           });
         }
       }
@@ -83,6 +111,10 @@ export const createSettingsSlice: StateCreator<
             name: p.name,
             color: p.color,
             background,
+            customId: typeof p.customId === 'string' ? p.customId : undefined,
+            description: typeof p.description === 'string' ? p.description : undefined,
+            deadline: typeof p.deadline === 'string' ? p.deadline : undefined,
+            updatedAt: typeof p.updatedAt === 'number' ? p.updatedAt : undefined,
           });
         }
       }

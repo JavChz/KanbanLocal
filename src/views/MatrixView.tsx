@@ -13,8 +13,10 @@ import {
   Inbox,
   CheckCircle2,
   Calendar,
-  Circle,
   ExternalLink,
+  PanelBottomClose,
+  PanelBottomOpen,
+  X,
 } from 'lucide-react';
 import {
   DndContext,
@@ -35,7 +37,7 @@ import { TaskModal } from '../components/Board/TaskModal';
 import { getColorStyles } from '../utils/colors';
 import { getFlagsFromPriority } from '../utils/priority';
 
-// Quadrant Card representation
+// Quadrant Task Card
 interface MatrixTaskCardProps {
   task: Task;
   projectColor?: string;
@@ -59,12 +61,14 @@ const MatrixTaskCard: React.FC<MatrixTaskCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`glass-card p-3.5 rounded-xl cursor-grab active:cursor-grabbing text-left flex flex-col gap-2 transition-all duration-150 select-none group relative ${
-        isDragging ? 'shadow-lg ring-2 ring-blue-500/40 opacity-40 scale-[1.01]' : 'hover:shadow-md'
+      className={`p-3 rounded-xl cursor-grab active:cursor-grabbing text-left flex flex-col justify-between gap-2 h-full min-h-[66px] transition-all duration-150 select-none group relative border ${
+        isDragging
+          ? 'shadow-xl ring-2 ring-blue-500/50 bg-white dark:bg-slate-800 scale-[1.02] border-blue-500/40 opacity-90'
+          : 'bg-white/80 dark:bg-slate-900/80 hover:bg-white dark:hover:bg-slate-900 border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs hover:shadow-sm'
       }`}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 flex-1">
+        <span className="text-xs font-medium text-slate-800 dark:text-slate-100 line-clamp-2 flex-1 leading-snug">
           {task.title}
         </span>
         {onOpenInProject && (
@@ -74,7 +78,7 @@ const MatrixTaskCard: React.FC<MatrixTaskCardProps> = ({
               e.stopPropagation();
               onOpenInProject(task.projectId, task.id);
             }}
-            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-500 transition-opacity p-0.5 rounded cursor-pointer"
+            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-500 transition-opacity p-0.5 rounded cursor-pointer shrink-0"
             title={t('open_in_project', 'Open in project')}
           >
             <ExternalLink size={12} />
@@ -83,24 +87,24 @@ const MatrixTaskCard: React.FC<MatrixTaskCardProps> = ({
       </div>
 
       {/* Meta indicators: Project, Deadline, Status */}
-      <div className="flex items-center gap-2 flex-wrap pt-0.5 text-2xs">
+      <div className="flex items-center gap-1.5 flex-wrap text-2xs">
         {projectName && (
-          <div className="flex items-center gap-1 font-medium text-slate-600 dark:text-slate-350">
-            <Circle size={6} className={`fill-current ${colorStyles.text}`} />
-            <span className="truncate max-w-[90px]">{projectName}</span>
+          <div className="flex items-center gap-1 font-medium text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-800/70 px-1.5 py-0.5 rounded-md">
+            <span className={`w-1.5 h-1.5 rounded-full ${colorStyles.bg}`} />
+            <span className="truncate max-w-[100px]">{projectName}</span>
           </div>
         )}
 
         {task.deadline && (
-          <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-mono">
-            <Calendar size={11} className="text-slate-400" />
+          <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-mono bg-slate-100/70 dark:bg-slate-800/70 px-1.5 py-0.5 rounded-md">
+            <Calendar size={10} className="text-slate-400" />
             <span>{task.deadline}</span>
           </div>
         )}
 
         {task.status === 'DONE' && (
-          <span className="inline-flex items-center gap-0.5 text-green-600 dark:text-green-400 font-semibold font-mono">
-            <CheckCircle2 size={11} />
+          <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-500/10 px-1.5 py-0.5 rounded-md">
+            <CheckCircle2 size={10} />
             <span>{t('done')}</span>
           </span>
         )}
@@ -117,7 +121,6 @@ const DraggableMatrixCard: React.FC<MatrixTaskCardProps> = (props) => {
   });
 
   const handleClick = (e: React.MouseEvent) => {
-    // Prevent accidental click when dragging
     if (transform && (Math.abs(transform.x) > 3 || Math.abs(transform.y) > 3)) {
       return;
     }
@@ -142,18 +145,21 @@ const DraggableMatrixCard: React.FC<MatrixTaskCardProps> = (props) => {
   );
 };
 
+// Quadrant Visual Theme Configuration
+interface QuadrantTheme {
+  iconBg: string;
+  cardBg: string;
+  border: string;
+}
+
 // Droppable Quadrant Container
 interface QuadrantContainerProps {
   id: TaskPriority;
   title: string;
-  quadrantBadge?: string;
   subtitle: string;
   icon: React.ReactNode;
   tasks: Task[];
-  headerBg: string;
-  borderColor: string;
-  badgeBg: string;
-  badgeText: string;
+  theme: QuadrantTheme;
   projectsMap: Map<string, { name: string; color: string }>;
   onTaskClick: (task: Task) => void;
   onAddTask: (priority: TaskPriority) => void;
@@ -163,13 +169,10 @@ interface QuadrantContainerProps {
 const QuadrantContainer: React.FC<QuadrantContainerProps> = ({
   id,
   title,
-  quadrantBadge,
   subtitle,
   icon,
   tasks,
-  borderColor,
-  badgeBg,
-  badgeText,
+  theme,
   projectsMap,
   onTaskClick,
   onAddTask,
@@ -181,50 +184,62 @@ const QuadrantContainer: React.FC<QuadrantContainerProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`glass-panel rounded-2xl flex flex-col p-4 transition-all duration-200 border min-h-[300px] h-full ${
-        isOver
-          ? 'ring-2 ring-blue-500/40 scale-[1.005] bg-blue-50/20 dark:bg-blue-950/20'
-          : borderColor
+      className={`flex flex-col transition-colors duration-150 h-full ${theme.cardBg} ${
+        isOver ? 'bg-blue-500/10 dark:bg-blue-500/15 ring-2 ring-inset ring-blue-500' : ''
       }`}
     >
       {/* Quadrant Header */}
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200/50 dark:border-slate-800/40 select-none">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="shrink-0">{icon}</span>
-          <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">
-            {title}
-          </h3>
-          {quadrantBadge && (
-            <span className={`px-2 py-0.5 rounded-full text-2xs font-semibold tracking-wide whitespace-nowrap shrink-0 ${badgeBg} ${badgeText}`}>
-              {quadrantBadge}
-            </span>
-          )}
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-200/60 dark:border-slate-800/60 select-none bg-slate-100/40 dark:bg-slate-900/40">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${theme.iconBg}`}>
+            {icon}
+          </div>
+          <div className="flex flex-col min-w-0">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 tracking-tight">
+              {title}
+            </h3>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-1 mt-0.5">
+              {subtitle}
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-2xs font-mono font-bold px-2 py-0.5 rounded-full bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-350 border border-slate-200/60 dark:border-slate-700/60">
             {tasks.length}
           </span>
           <button
             type="button"
             onClick={() => onAddTask(id)}
-            className="p-1 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
             title={`${t('add_task')} (${title})`}
           >
-            <Plus size={15} />
+            <Plus size={14} />
           </button>
         </div>
       </div>
 
-      <p className="text-2xs text-slate-400 dark:text-slate-500 italic mb-3 text-left">
-        {subtitle}
-      </p>
-
       {/* Task List */}
-      <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto max-h-[460px] pr-0.5">
+      <div className="flex-1 flex flex-col gap-2 p-3 overflow-y-auto max-h-[380px] min-h-[220px]">
         {tasks.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-400 dark:text-slate-500 text-xs italic border border-dashed border-slate-200 dark:border-slate-800/70 rounded-xl my-auto">
-            <span>{t('no_tasks_in_quadrant', 'No tasks in this quadrant')}</span>
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center my-auto select-none">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 opacity-30 ${theme.iconBg}`}>
+              {icon}
+            </div>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+              {t('no_tasks_in_quadrant', 'No tasks here')}
+            </p>
+            <p className="text-2xs text-slate-600 dark:text-slate-400 mt-0.5">
+              {t('drop_or_add_hint', 'Drop tasks here or click + to add')}
+            </p>
+            <button
+              type="button"
+              onClick={() => onAddTask(id)}
+              className="mt-3 px-3 py-1 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-200 bg-slate-100/60 dark:bg-slate-800/60 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors inline-flex items-center gap-1.5 cursor-pointer border border-slate-200/50 dark:border-slate-700/50"
+            >
+              <Plus size={12} />
+              <span>{t('add_task')}</span>
+            </button>
           </div>
         ) : (
           tasks.map((task) => {
@@ -242,16 +257,6 @@ const QuadrantContainer: React.FC<QuadrantContainerProps> = ({
           })
         )}
       </div>
-
-      {/* Quick Add Button */}
-      <button
-        type="button"
-        onClick={() => onAddTask(id)}
-        className="mt-3 py-2 px-3 rounded-xl border border-slate-200/60 dark:border-slate-800/60 hover:border-blue-500/50 bg-slate-100/40 dark:bg-slate-900/30 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer select-none"
-      >
-        <Plus size={14} />
-        <span>{t('add_task')}</span>
-      </button>
     </div>
   );
 };
@@ -280,40 +285,46 @@ const UnassignedDrawer: React.FC<UnassignedDrawerProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`glass-panel p-4 rounded-2xl border transition-all duration-200 flex flex-col gap-3 mt-2 ${
+      className={`rounded-2xl border transition-all duration-200 p-4 backdrop-blur-md flex flex-col gap-3 ${
         isOver
-          ? 'ring-2 ring-blue-500 bg-blue-500/20 dark:bg-blue-950/50 border-blue-400 scale-[1.005]'
+          ? 'ring-2 ring-blue-500 bg-blue-500/15 dark:bg-blue-950/40 border-blue-400 shadow-md scale-[1.003]'
           : isDraggingActive
-          ? 'ring-2 ring-dashed ring-blue-400/50 border-blue-400/40 bg-blue-500/5'
-          : 'border-slate-200/60 dark:border-slate-800/50'
+          ? 'border-dashed border-blue-400/60 bg-blue-500/[0.03] ring-1 ring-blue-400/30'
+          : 'bg-white/40 dark:bg-slate-900/40 border-slate-200/70 dark:border-slate-800/70'
       }`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Inbox size={16} className="text-slate-500" />
-          <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200">
-            {t('unprioritized_inbox', 'Unprioritized Tasks')} ({tasks.length})
+          <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <Inbox size={13} />
+          </div>
+          <h4 className="font-bold text-xs text-slate-800 dark:text-slate-200">
+            {t('unprioritized_inbox', 'Unprioritized Tasks')}
           </h4>
-          <span className="text-2xs text-slate-400 italic">
-            {t('unprioritized_desc', 'Drag tasks into any quadrant to set priority')}
+          <span className="text-2xs font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+            {tasks.length}
+          </span>
+          <span className="text-2xs text-slate-400 hidden sm:inline">
+            · {t('unprioritized_desc', 'Drag tasks into any section to set priority')}
           </span>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
+          className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           {t('hide', 'Hide')}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto pr-1">
-        {tasks.length === 0 ? (
-          <div className="col-span-full py-6 text-center text-xs text-slate-400 dark:text-slate-500 italic border border-dashed border-slate-200 dark:border-slate-800/60 rounded-xl">
-            {t('all_tasks_prioritized', 'All tasks are prioritized. Drag tasks here to unprioritize.')}
-          </div>
-        ) : (
-          tasks.map((task) => {
+      {tasks.length === 0 ? (
+        <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500 flex items-center justify-center gap-2">
+          <CheckCircle2 size={14} className="text-emerald-500" />
+          <span>{t('all_tasks_prioritized', 'All tasks are prioritized. Drag tasks here to unprioritize.')}</span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto pr-1 auto-rows-fr">
+          {tasks.map((task) => {
             const projectInfo = projectsMap.get(task.projectId);
             return (
               <DraggableMatrixCard
@@ -325,12 +336,14 @@ const UnassignedDrawer: React.FC<UnassignedDrawerProps> = ({
                 onOpenInProject={onOpenInProject}
               />
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   );
 };
+
+type MatrixStatusFilter = 'ACTIVE' | 'ALL' | 'TODO' | 'IN_PROGRESS' | 'DONE' | 'ARCHIVED';
 
 export const MatrixView: React.FC = () => {
   const { t } = useTranslation();
@@ -339,11 +352,29 @@ export const MatrixView: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const [projectFilter, setProjectFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState<MatrixStatusFilter>(() => {
+    const saved = localStorage.getItem('matrix_status_filter');
+    if (
+      saved === 'ACTIVE' ||
+      saved === 'ALL' ||
+      saved === 'TODO' ||
+      saved === 'IN_PROGRESS' ||
+      saved === 'DONE' ||
+      saved === 'ARCHIVED'
+    ) {
+      return saved;
+    }
+    return 'ACTIVE';
+  });
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [showUnassignedDrawer, setShowUnassignedDrawer] = useState(true);
+
+  const handleStatusFilterChange = (status: MatrixStatusFilter) => {
+    setStatusFilter(status);
+    localStorage.setItem('matrix_status_filter', status);
+  };
 
   // Map projects for fast lookup
   const projectsMap = React.useMemo(() => {
@@ -362,7 +393,12 @@ export const MatrixView: React.FC = () => {
       const matchesStatus =
         statusFilter === 'ARCHIVED'
           ? task.archived === true
-          : task.archived !== true && (statusFilter === 'ALL' || task.status === statusFilter);
+          : task.archived !== true &&
+            (statusFilter === 'ALL'
+              ? true
+              : statusFilter === 'ACTIVE'
+              ? task.status !== 'DONE'
+              : task.status === statusFilter);
 
       const matchesProject = projectFilter === 'ALL' || task.projectId === projectFilter;
 
@@ -370,12 +406,12 @@ export const MatrixView: React.FC = () => {
     });
   }, [tasks, search, statusFilter, projectFilter]);
 
-  // Group tasks into Eisenhower quadrants
+  // Group tasks into Eisenhower sections
   const quadrantTasks = React.useMemo(() => {
-    const q1: Task[] = [];
-    const q2: Task[] = [];
-    const q3: Task[] = [];
-    const q4: Task[] = [];
+    const urgent: Task[] = [];
+    const plan: Task[] = [];
+    const delegate: Task[] = [];
+    const later: Task[] = [];
     const unassigned: Task[] = [];
 
     filteredTasks.forEach((task) => {
@@ -385,31 +421,31 @@ export const MatrixView: React.FC = () => {
         return;
       }
 
-      // If priority is set to one of the 4 quadrants, respect it directly
+      // If priority is set to one of the 4 sections, respect it directly
       if (task.priority === 'urgent_important') {
-        q1.push(task);
+        urgent.push(task);
         return;
       }
       if (task.priority === 'not_urgent_important') {
-        q2.push(task);
+        plan.push(task);
         return;
       }
       if (task.priority === 'urgent_not_important') {
-        q3.push(task);
+        delegate.push(task);
         return;
       }
       if (task.priority === 'not_urgent_not_important') {
-        q4.push(task);
+        later.push(task);
         return;
       }
 
       // Fallback only if priority was never set (e.g. legacy tasks with only boolean flags)
       if (task.isUrgent === true && task.isImportant === true) {
-        q1.push(task);
+        urgent.push(task);
       } else if (task.isUrgent === false && task.isImportant === true) {
-        q2.push(task);
+        plan.push(task);
       } else if (task.isUrgent === true && task.isImportant === false) {
-        q3.push(task);
+        delegate.push(task);
       } else if (
         task.isUrgent === false &&
         task.isImportant === false &&
@@ -417,13 +453,13 @@ export const MatrixView: React.FC = () => {
         task.isImportant !== undefined &&
         task.priority !== undefined
       ) {
-        q4.push(task);
+        later.push(task);
       } else {
         unassigned.push(task);
       }
     });
 
-    return { q1, q2, q3, q4, unassigned };
+    return { urgent, plan, delegate, later, unassigned };
   }, [filteredTasks]);
 
   // Drag and drop sensors
@@ -519,74 +555,49 @@ export const MatrixView: React.FC = () => {
   const activeTaskProject = activeTask ? projectsMap.get(activeTask.projectId) : undefined;
 
   return (
-    <div className="flex flex-col gap-6 h-full animate-fade-in text-left">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-              <Layers size={22} />
-            </span>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-slate-50 md:text-4xl">
-              {t('eisenhower_matrix', 'Eisenhower Matrix')}
-            </h1>
+    <div className="flex flex-col gap-3 h-full animate-fade-in text-left">
+      {/* Unified Command Toolbar (Single-Row, Standardized Controls) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-2.5 rounded-2xl bg-white/40 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md select-none">
+        {/* Left: View Title & Context */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
+            <Layers size={16} />
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('eisenhower_desc', 'Prioritize tasks by urgency and importance to focus on high-impact work.')}
-          </p>
+          <h1 className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            {t('eisenhower_matrix', 'Eisenhower Matrix')}
+          </h1>
         </div>
 
-        {/* Quadrant Quick Summary Stats */}
-        <div className="flex items-center gap-2 flex-wrap text-2xs font-semibold">
-          <span className="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
-            {t('quadrant_1_title', 'Urgent')}: {quadrantTasks.q1.length}
-          </span>
-          <span className="px-2.5 py-1 rounded-lg bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30">
-            {t('quadrant_2_title', 'Plan')}: {quadrantTasks.q2.length}
-          </span>
-          <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-            {t('quadrant_3_title', 'Delegate')}: {quadrantTasks.q3.length}
-          </span>
-          <span className="px-2.5 py-1 rounded-lg bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30">
-            {t('quadrant_4_title', 'Later')}: {quadrantTasks.q4.length}
-          </span>
-          <button
-            type="button"
-            onClick={() => setShowUnassignedDrawer(!showUnassignedDrawer)}
-            className={`px-2.5 py-1 rounded-lg border transition-all cursor-pointer font-bold ${
-              showUnassignedDrawer
-                ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/40 shadow-xs'
-                : 'bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-300/60'
-            }`}
-          >
-            {t('unprioritized_inbox', 'Inbox')}: {quadrantTasks.unassigned.length}
-          </button>
-        </div>
-      </div>
-
-      {/* Filter Toolbar */}
-      <div className="glass-panel p-3.5 rounded-2xl flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between border border-slate-200/50 dark:border-slate-800/40">
-        {/* Search Input */}
-        <div className="relative flex-1 max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('search_placeholder', 'Search tasks...')}
-            className="glass-input w-full pl-9 pr-4 py-2 rounded-xl text-xs placeholder:text-slate-400"
-          />
-        </div>
-
-        {/* Project & Status Filters */}
+        {/* Right: Streamlined Controls (Search, Project, Status with Active/Hide Done, and Unprioritized Panel Toggle) */}
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Quick Search */}
+          <div className="relative w-44 sm:w-56">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('search_placeholder', 'Search tasks...')}
+              className="w-full pl-7.5 pr-6 h-8 rounded-lg text-xs bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 focus:border-blue-500/60 focus:outline-hidden text-slate-800 dark:text-slate-100 placeholder:text-slate-400 transition-colors"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+
           {/* Project Filter */}
-          <div className="flex items-center gap-1.5">
-            <Filter size={14} className="text-slate-400" />
+          <div className="flex items-center gap-1">
+            <Filter size={12} className="text-slate-400 hidden sm:block" />
             <select
               value={projectFilter}
               onChange={(e) => setProjectFilter(e.target.value)}
-              className="glass-input px-3 py-1.5 rounded-xl text-xs cursor-pointer font-medium"
+              className="h-8 px-2.5 rounded-lg text-xs bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 cursor-pointer font-medium focus:outline-hidden"
             >
               <option value="ALL">{t('all_projects', 'All Projects')}</option>
               {projects.map((p) => (
@@ -597,18 +608,41 @@ export const MatrixView: React.FC = () => {
             </select>
           </div>
 
-          {/* Status Filter */}
+          {/* Status Filter with Active (Hide Done) option */}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="glass-input px-3 py-1.5 rounded-xl text-xs cursor-pointer font-medium"
+            onChange={(e) => handleStatusFilterChange(e.target.value as MatrixStatusFilter)}
+            className="h-8 px-2.5 rounded-lg text-xs bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 cursor-pointer font-medium focus:outline-hidden"
           >
+            <option value="ACTIVE">{t('status_active', 'Active (Hide Done)')}</option>
             <option value="ALL">{t('status', 'Status')}: {t('all', 'All')}</option>
             <option value="TODO">{t('todo')}</option>
             <option value="IN_PROGRESS">{t('in_progress')}</option>
             <option value="DONE">{t('done')}</option>
             <option value="ARCHIVED">{t('archived', 'Archived')}</option>
           </select>
+
+          {/* Unprioritized Panel Toggle Button (Neutral UI element, no loud primary styling) */}
+          <button
+            type="button"
+            onClick={() => setShowUnassignedDrawer(!showUnassignedDrawer)}
+            title={showUnassignedDrawer ? t('hide', 'Hide') : t('unprioritized_inbox', 'Unprioritized Tasks')}
+            className={`inline-flex items-center gap-1.5 px-2.5 h-8 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
+              showUnassignedDrawer
+                ? 'bg-slate-200/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300/80 dark:border-slate-700 shadow-2xs'
+                : 'bg-slate-100/60 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-slate-800/80 hover:text-slate-900 dark:hover:text-slate-200'
+            }`}
+          >
+            {showUnassignedDrawer ? (
+              <PanelBottomClose size={13} className="text-slate-500 dark:text-slate-400 shrink-0" />
+            ) : (
+              <PanelBottomOpen size={13} className="text-slate-400 dark:text-slate-500 shrink-0" />
+            )}
+            <span>{t('unprioritized', 'Unprioritized')}</span>
+            <span className="font-mono text-2xs px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+              {quadrantTasks.unassigned.length}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -619,87 +653,114 @@ export const MatrixView: React.FC = () => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        {/* Matrix Axes Header */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-          <div className="py-1 px-3 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
-            <Clock size={14} />
-            <span>{t('urgent', 'Urgent')}</span>
+        {/* Unified 2x2 Matrix Frame */}
+        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/30 dark:bg-slate-900/30 backdrop-blur-md overflow-hidden flex flex-col flex-1 shadow-xs">
+          {/* Top Urgency Column Axis Bar */}
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200/80 dark:divide-slate-800/80 border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-100/40 dark:bg-slate-900/50 select-none">
+            <div className="px-4 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Flame size={13} className="text-rose-500" />
+                <span className="text-xs font-bold uppercase tracking-widest text-rose-500/90 font-mono">
+                  {t('urgent', 'Urgent')}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-600 dark:text-slate-400">
+                {t('urgent_axis_hint', 'Do immediately')}
+              </span>
+            </div>
+            <div className="px-4 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar size={13} className="text-blue-400" />
+                <span className="text-xs font-bold uppercase tracking-widest text-blue-400/90 font-mono">
+                  {t('not_urgent', 'Not Urgent')}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-600 dark:text-slate-400">
+                {t('not_urgent_axis_hint', 'Schedule & plan')}
+              </span>
+            </div>
           </div>
-          <div className="py-1 px-3 rounded-xl bg-slate-200/50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 border border-slate-300/40 dark:border-slate-700/40 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
-            <Calendar size={14} />
-            <span>{t('not_urgent', 'Not Urgent')}</span>
+
+          {/* 2x2 Matrix Cells with Intersecting Grid Dividing Lines */}
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200/80 dark:divide-slate-800/80 flex-1">
+            {/* Column 1: Urgent (Top: Urgent, Bottom: Delegate) */}
+            <div className="flex flex-col divide-y divide-slate-200/80 dark:divide-slate-800/80 flex-1">
+              {/* Row 1: Urgent (Urgent & Important) */}
+              <QuadrantContainer
+                id="urgent_important"
+                title={t('quadrant_1_title', 'Urgent')}
+                subtitle={t('quadrant_1_desc', 'Crises, deadlines & pressing issues')}
+                icon={<Flame size={14} />}
+                tasks={quadrantTasks.urgent}
+                theme={{
+                  iconBg: 'bg-rose-500/10 text-rose-500 dark:bg-rose-500/15',
+                  cardBg: 'bg-rose-500/[0.02]',
+                  border: '',
+                }}
+                projectsMap={projectsMap}
+                onTaskClick={handleOpenTask}
+                onAddTask={handleCreateTaskInQuadrant}
+                onOpenInProject={handleOpenInProject}
+              />
+
+              {/* Row 2: Delegate (Urgent & Not Important) */}
+              <QuadrantContainer
+                id="urgent_not_important"
+                title={t('quadrant_3_title', 'Delegate')}
+                subtitle={t('quadrant_3_desc', 'Interruptions & minor tasks')}
+                icon={<Clock size={14} />}
+                tasks={quadrantTasks.delegate}
+                theme={{
+                  iconBg: 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/15',
+                  cardBg: 'bg-amber-500/[0.02]',
+                  border: '',
+                }}
+                projectsMap={projectsMap}
+                onTaskClick={handleOpenTask}
+                onAddTask={handleCreateTaskInQuadrant}
+                onOpenInProject={handleOpenInProject}
+              />
+            </div>
+
+            {/* Column 2: Not Urgent (Top: Plan, Bottom: Later) */}
+            <div className="flex flex-col divide-y divide-slate-200/80 dark:divide-slate-800/80 flex-1">
+              {/* Row 1: Plan (Not Urgent & Important) */}
+              <QuadrantContainer
+                id="not_urgent_important"
+                title={t('quadrant_2_title', 'Plan')}
+                subtitle={t('quadrant_2_desc', 'Planning, deep work & growth')}
+                icon={<Star size={14} className="fill-current" />}
+                tasks={quadrantTasks.plan}
+                theme={{
+                  iconBg: 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/15',
+                  cardBg: 'bg-blue-500/[0.02]',
+                  border: '',
+                }}
+                projectsMap={projectsMap}
+                onTaskClick={handleOpenTask}
+                onAddTask={handleCreateTaskInQuadrant}
+                onOpenInProject={handleOpenInProject}
+              />
+
+              {/* Row 2: Later (Not Urgent & Not Important) */}
+              <QuadrantContainer
+                id="not_urgent_not_important"
+                title={t('quadrant_4_title', 'Later')}
+                subtitle={t('quadrant_4_desc', 'Time wasters & backlog')}
+                icon={<Coffee size={14} />}
+                tasks={quadrantTasks.later}
+                theme={{
+                  iconBg: 'bg-slate-500/10 text-slate-500 dark:bg-slate-400/15',
+                  cardBg: 'bg-slate-500/[0.02]',
+                  border: '',
+                }}
+                projectsMap={projectsMap}
+                onTaskClick={handleOpenTask}
+                onAddTask={handleCreateTaskInQuadrant}
+                onOpenInProject={handleOpenInProject}
+              />
+            </div>
           </div>
-        </div>
-
-        {/* 2x2 Matrix Quadrants */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-          {/* Quadrant: Urgent (Urgent & Important) */}
-          <QuadrantContainer
-            id="urgent_important"
-            title={t('quadrant_1_title', 'Urgent')}
-            subtitle={t('quadrant_1_desc', 'Urgent & Important: Crises, pressing deadlines, and critical problems')}
-            icon={<Flame size={16} className="text-rose-500" />}
-            tasks={quadrantTasks.q1}
-            headerBg="bg-rose-500/10"
-            borderColor="border-rose-400/30 dark:border-rose-500/30"
-            badgeBg="bg-rose-500/20"
-            badgeText="text-rose-700 dark:text-rose-300"
-            projectsMap={projectsMap}
-            onTaskClick={handleOpenTask}
-            onAddTask={handleCreateTaskInQuadrant}
-            onOpenInProject={handleOpenInProject}
-          />
-
-          {/* Quadrant: Plan (Not Urgent & Important) */}
-          <QuadrantContainer
-            id="not_urgent_important"
-            title={t('quadrant_2_title', 'Plan')}
-            subtitle={t('quadrant_2_desc', 'Important, Not Urgent: Planning, deep work, relationships, self-growth')}
-            icon={<Star size={16} className="text-blue-500 fill-blue-500" />}
-            tasks={quadrantTasks.q2}
-            headerBg="bg-blue-500/10"
-            borderColor="border-blue-400/30 dark:border-blue-500/30"
-            badgeBg="bg-blue-500/20"
-            badgeText="text-blue-700 dark:text-blue-300"
-            projectsMap={projectsMap}
-            onTaskClick={handleOpenTask}
-            onAddTask={handleCreateTaskInQuadrant}
-            onOpenInProject={handleOpenInProject}
-          />
-
-          {/* Quadrant: Delegate (Urgent & Not Important) */}
-          <QuadrantContainer
-            id="urgent_not_important"
-            title={t('quadrant_3_title', 'Delegate')}
-            subtitle={t('quadrant_3_desc', 'Urgent, Not Important: Interruptions, minor requests, administrative tasks')}
-            icon={<Clock size={16} className="text-amber-500" />}
-            tasks={quadrantTasks.q3}
-            headerBg="bg-amber-500/10"
-            borderColor="border-amber-400/30 dark:border-amber-500/30"
-            badgeBg="bg-amber-500/20"
-            badgeText="text-amber-700 dark:text-amber-300"
-            projectsMap={projectsMap}
-            onTaskClick={handleOpenTask}
-            onAddTask={handleCreateTaskInQuadrant}
-            onOpenInProject={handleOpenInProject}
-          />
-
-          {/* Quadrant: Later (Neither) */}
-          <QuadrantContainer
-            id="not_urgent_not_important"
-            title={t('quadrant_4_title', 'Later')}
-            subtitle={t('quadrant_4_desc', 'Neither: Time wasters, backlog items, non-essential activities')}
-            icon={<Coffee size={16} className="text-slate-500" />}
-            tasks={quadrantTasks.q4}
-            headerBg="bg-slate-500/10"
-            borderColor="border-slate-300/40 dark:border-slate-700/40"
-            badgeBg="bg-slate-500/20"
-            badgeText="text-slate-700 dark:text-slate-300"
-            projectsMap={projectsMap}
-            onTaskClick={handleOpenTask}
-            onAddTask={handleCreateTaskInQuadrant}
-            onOpenInProject={handleOpenInProject}
-          />
         </div>
 
         {/* Unprioritized Tasks Drawer (Triage Box) */}
@@ -717,7 +778,7 @@ export const MatrixView: React.FC = () => {
         {/* Drag Overlay */}
         <DragOverlay>
           {activeTask ? (
-            <div className="w-64 opacity-90 scale-105 rotate-1">
+            <div className="w-64 opacity-95 scale-105 rotate-1">
               <MatrixTaskCard
                 task={activeTask}
                 projectName={activeTaskProject?.name}

@@ -26,7 +26,7 @@ export const ProjectBackgroundSelector: React.FC<ProjectBackgroundSelectorProps>
       onChangeValue('');
     } else if (type === 'solid' && !bgValue.startsWith('#')) {
       onChangeValue('#3b82f6');
-    } else if (type === 'image' && !['cat', 'cocodrile', 'fields', 'moon', 'sunset', 'sunshines'].includes(bgValue)) {
+    } else if (type === 'image' && !(bgValue in BACKGROUND_IMAGES)) {
       onChangeValue('sunset');
     } else if (type === 'custom' && bgValue.startsWith('#')) {
       onChangeValue('');

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Task, TaskPriority } from '../../types/kanban';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
@@ -17,19 +17,16 @@ interface TaskModalProps {
   task: Task | null;
   isOpen: boolean;
   onClose: () => void;
-  clickedTaskRect?: { top: number; left: number; width: number; height: number } | null;
 }
 
 interface TaskModalContentProps {
   task: Task;
   onClose: () => void;
-  clickedTaskRect?: { top: number; left: number; width: number; height: number } | null;
 }
 
 const TaskModalContent: React.FC<TaskModalContentProps> = ({
   task,
   onClose,
-  clickedTaskRect,
 }) => {
   const { t } = useTranslation();
   const { updateTask, deleteTask, projects } = useKanbanStore();
@@ -54,9 +51,6 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
     }
   });
 
-  const [modalStyle, setModalStyle] = useState<React.CSSProperties | undefined>(undefined);
-  const contentRef = useRef<HTMLDivElement>(null);
-
   const toggleExpanded = () => {
     setIsExpanded((prev) => {
       const next = !prev;
@@ -80,41 +74,6 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  useEffect(() => {
-    if (clickedTaskRect && contentRef.current) {
-      const estimatedHeight = contentRef.current.offsetHeight + 80;
-      const estimatedWidth = Math.max(340, clickedTaskRect.width);
-
-      let top = clickedTaskRect.top;
-      let left = clickedTaskRect.left;
-
-      if (left + estimatedWidth > window.innerWidth) {
-        left = window.innerWidth - estimatedWidth - 16;
-      }
-      if (left < 16) {
-        left = 16;
-      }
-
-      if (top + estimatedHeight > window.innerHeight) {
-        top = window.innerHeight - estimatedHeight - 16;
-      }
-      if (top < 16) {
-        top = 16;
-      }
-
-      setModalStyle({
-        position: 'fixed',
-        top: `${top}px`,
-        left: `${left}px`,
-        width: `${estimatedWidth}px`,
-        maxWidth: 'none',
-        margin: 0,
-      });
-    } else {
-      setModalStyle(undefined);
-    }
-  }, [clickedTaskRect, tags, links]);
 
   const handleSave = () => {
     if (!title.trim()) return;
@@ -177,9 +136,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
 
   const project = projects.find((p) => p.id === projectId);
   const projectColorVar = project ? `var(--color-${project.color})` : undefined;
-
   const combinedStyle: React.CSSProperties = {
-    ...(!isExpanded ? modalStyle : undefined),
     ...(projectColorVar ? { '--project-color': projectColorVar } : {}),
   } as React.CSSProperties;
 
@@ -190,9 +147,9 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
         onClose={onClose}
         title={t('task_details')}
         style={combinedStyle}
-        size={isExpanded ? '2xl' : 'md'}
-        className={isExpanded ? 'h-[88vh] max-h-[88vh] flex flex-col' : ''}
-        contentClassName={isExpanded ? 'flex-1 min-h-0 flex flex-col' : ''}
+        size={isExpanded ? '2xl' : 'lg'}
+        className={isExpanded ? 'h-[88vh]' : ''}
+        contentClassName={isExpanded ? 'flex-1 min-h-0 flex flex-col' : 'flex-1 min-h-0 overflow-y-auto pr-1'}
         headerActions={headerActions}
       >
         {isExpanded ? (
@@ -295,7 +252,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
             </div>
           </div>
         ) : (
-          <div ref={contentRef} className="flex flex-col gap-5 text-left">
+          <div className="flex flex-col gap-5 text-left">
             {/* Task Title */}
             <Input
               label={t('task_title')}
@@ -360,7 +317,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
             <TaskLinksEditor links={links} onChangeLinks={setLinks} />
 
             {/* Modal Action Footer */}
-            <div className="flex justify-end gap-2 mt-2 pt-2">
+            <div className="sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-3 pb-1 border-t border-slate-200/60 dark:border-slate-800/60 flex justify-end gap-2 shrink-0 z-10 mt-2">
               <Button type="button" variant="secondary" onClick={onClose}>
                 {t('cancel')}
               </Button>
@@ -388,7 +345,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   task,
   isOpen,
   onClose,
-  clickedTaskRect,
 }) => {
   if (!isOpen || !task) return null;
 
@@ -397,7 +353,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       key={task.id}
       task={task}
       onClose={onClose}
-      clickedTaskRect={clickedTaskRect}
     />
   );
 };

@@ -44,7 +44,6 @@ export const BoardView: React.FC = () => {
   // Modal states
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [clickedTaskRect, setClickedTaskRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -151,14 +150,7 @@ export const BoardView: React.FC = () => {
     });
   };
 
-  const handleTaskClick = (task: Task, e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setClickedTaskRect({
-      top: rect.top,
-      left: rect.left,
-      width: rect.width,
-      height: rect.height,
-    });
+  const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
     setIsTaskModalOpen(true);
   };
@@ -190,7 +182,6 @@ export const BoardView: React.FC = () => {
   const handleCloseTaskModal = () => {
     setIsTaskModalOpen(false);
     setSelectedTask(null);
-    setClickedTaskRect(null);
     if (searchParams.has('task')) {
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('task');
@@ -259,7 +250,6 @@ export const BoardView: React.FC = () => {
       <TaskModal
         task={selectedTask}
         isOpen={isTaskModalOpen}
-        clickedTaskRect={clickedTaskRect}
         onClose={handleCloseTaskModal}
       />
 

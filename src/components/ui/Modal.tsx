@@ -68,7 +68,7 @@ export const Modal: React.FC<ModalProps> = ({
   const modalRoot = document.getElementById('modal-root') || document.body;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300 animate-fade-in"
@@ -78,7 +78,7 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Modal Container */}
       <div
         style={style}
-        className={`relative w-full ${sizeClasses[size] || 'max-w-md'} glass-panel p-6 rounded-2xl shadow-2xl z-10 flex flex-col gap-4 animate-modal-entrance scale-100 max-h-[90vh] transition-all duration-200 ${
+        className={`relative w-full ${sizeClasses[size] || 'max-w-md'} glass-panel p-6 rounded-2xl shadow-2xl z-10 flex flex-col gap-4 animate-modal-entrance max-h-[90vh] ${
           overflowVisible ? 'overflow-visible' : 'overflow-y-auto'
         } ${className}`}
       >

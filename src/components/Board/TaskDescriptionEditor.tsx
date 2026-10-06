@@ -12,7 +12,6 @@ import {
   Link,
   Eye,
   Edit3,
-  Columns,
   Maximize2,
   Minimize2,
 } from 'lucide-react';
@@ -27,7 +26,7 @@ interface TaskDescriptionEditorProps {
   placeholder?: string;
 }
 
-type EditorMode = 'write' | 'preview' | 'split';
+type EditorMode = 'write' | 'preview';
 
 export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
   value,
@@ -40,9 +39,6 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
   const { t } = useTranslation();
   const [mode, setMode] = useState<EditorMode>('write');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // If collapsed, 'split' mode falls back to 'write'
-  const effectiveMode: EditorMode = !isExpanded && mode === 'split' ? 'write' : mode;
 
   // Compute text statistics
   const stats = useMemo(() => {
@@ -172,13 +168,13 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
 
         {/* View Mode Switcher & Expand Toggle */}
         <div className="flex items-center gap-1">
-          {/* Write / Preview / Split Mode Tabs */}
+          {/* Write / Preview Mode Tabs */}
           <div className="flex items-center p-0.5 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
             <button
               type="button"
               onClick={() => setMode('write')}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                effectiveMode === 'write'
+                mode === 'write'
                   ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
@@ -191,7 +187,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
               type="button"
               onClick={() => setMode('preview')}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                effectiveMode === 'preview'
+                mode === 'preview'
                   ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
@@ -200,21 +196,6 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
               <Eye size={13} />
               <span>{t('preview', 'Preview')}</span>
             </button>
-            {isExpanded && (
-              <button
-                type="button"
-                onClick={() => setMode('split')}
-                className={`hidden md:flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                  effectiveMode === 'split'
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-                title={t('split_view', 'Split view')}
-              >
-                <Columns size={13} />
-                <span>{t('split_view', 'Split')}</span>
-              </button>
-            )}
           </div>
 
           {/* Expand / Minimize Toggle Button */}
@@ -231,8 +212,8 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
         </div>
       </div>
 
-      {/* Formatting Toolbar (shown when in Write or Split mode) */}
-      {(effectiveMode === 'write' || effectiveMode === 'split') && (
+      {/* Formatting Toolbar (shown when in Write mode) */}
+      {mode === 'write' && (
         <div className="flex items-center gap-0.5 flex-wrap py-1 px-1.5 rounded-lg bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/70 dark:border-slate-800/70 select-none">
           <button
             type="button"
@@ -315,19 +296,15 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
         </div>
       )}
 
-      {/* Editor Body: Write, Preview, or Split View */}
+      {/* Editor Body: Write or Preview View */}
       <div
         className={`w-full ${
-          isExpanded ? 'flex-1 min-h-[340px] flex flex-col md:flex-row gap-4' : 'flex flex-col'
+          isExpanded ? 'flex-1 min-h-[340px] flex flex-col' : 'flex flex-col'
         }`}
       >
         {/* Write Pane */}
-        {(effectiveMode === 'write' || effectiveMode === 'split') && (
-          <div
-            className={`w-full flex flex-col ${
-              effectiveMode === 'split' ? 'md:w-1/2 flex-1' : isExpanded ? 'flex-1' : ''
-            }`}
-          >
+        {mode === 'write' && (
+          <div className={`w-full flex flex-col ${isExpanded ? 'flex-1' : ''}`}>
             <div
               className={`w-full rounded-xl border border-slate-300 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 p-3.5 focus-within:border-[var(--project-color,#3b82f6)] focus-within:ring-2 focus-within:ring-[var(--project-color,#3b82f6)]/20 transition-all shadow-xs ${
                 isExpanded ? 'flex-1 flex flex-col' : ''
@@ -349,14 +326,10 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
         )}
 
         {/* Preview Pane */}
-        {(effectiveMode === 'preview' || effectiveMode === 'split') && (
+        {mode === 'preview' && (
           <div
             className={`w-full rounded-xl border border-slate-200/70 dark:border-slate-800/70 bg-slate-50/50 dark:bg-slate-900/40 p-4 overflow-y-auto text-left ${
-              effectiveMode === 'split'
-                ? 'md:w-1/2 flex-1 min-h-[300px]'
-                : isExpanded
-                ? 'flex-1 min-h-[340px]'
-                : 'min-h-[140px]'
+              isExpanded ? 'flex-1 min-h-[340px]' : 'min-h-[140px]'
             }`}
           >
             <MarkdownPreview

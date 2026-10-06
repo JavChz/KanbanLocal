@@ -656,109 +656,142 @@ export const MatrixView: React.FC = () => {
         {/* Unified 2x2 Matrix Frame */}
         <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/30 dark:bg-slate-900/30 backdrop-blur-md overflow-hidden flex flex-col flex-1 shadow-xs">
           {/* Top Urgency Column Axis Bar */}
-          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200/80 dark:divide-slate-800/80 border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-100/40 dark:bg-slate-900/50 select-none">
-            <div className="px-4 py-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Flame size={13} className="text-rose-500" />
-                <span className="text-xs font-bold uppercase tracking-widest text-rose-500/90 font-mono">
-                  {t('urgent', 'Urgent')}
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-600 dark:text-slate-400">
-                {t('urgent_axis_hint', 'Do immediately')}
-              </span>
+          <div className="flex border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-100/40 dark:bg-slate-900/50 select-none">
+            {/* Corner Spacer aligning with left row headers */}
+            <div className="w-8 sm:w-9 shrink-0 flex items-center justify-center border-r border-slate-200/80 dark:border-slate-800/80 text-slate-400 dark:text-slate-500">
+              <Layers size={13} className="opacity-40" />
             </div>
-            <div className="px-4 py-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar size={13} className="text-blue-400" />
-                <span className="text-xs font-bold uppercase tracking-widest text-blue-400/90 font-mono">
-                  {t('not_urgent', 'Not Urgent')}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200/80 dark:divide-slate-800/80 flex-1">
+              <div className="px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Flame size={13} className="text-rose-500" />
+                  <span className="text-xs font-bold uppercase tracking-widest text-rose-500/90 font-mono">
+                    {t('urgent', 'Urgent')}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-600 dark:text-slate-400">
+                  {t('urgent_axis_hint', 'Do immediately')}
                 </span>
               </div>
-              <span className="text-[11px] text-slate-600 dark:text-slate-400">
-                {t('not_urgent_axis_hint', 'Schedule & plan')}
-              </span>
+              <div className="px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Calendar size={13} className="text-blue-400" />
+                  <span className="text-xs font-bold uppercase tracking-widest text-blue-400/90 font-mono">
+                    {t('not_urgent', 'Not Urgent')}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-600 dark:text-slate-400">
+                  {t('not_urgent_axis_hint', 'Schedule & plan')}
+                </span>
+              </div>
             </div>
           </div>
 
           {/* 2x2 Matrix Cells with Intersecting Grid Dividing Lines */}
-          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200/80 dark:divide-slate-800/80 flex-1">
-            {/* Column 1: Urgent (Top: Urgent, Bottom: Delegate) */}
-            <div className="flex flex-col divide-y divide-slate-200/80 dark:divide-slate-800/80 flex-1">
-              {/* Row 1: Urgent (Urgent & Important) */}
-              <QuadrantContainer
-                id="urgent_important"
-                title={t('quadrant_1_title', 'Urgent')}
-                subtitle={t('quadrant_1_desc', 'Crises, deadlines & pressing issues')}
-                icon={<Flame size={14} />}
-                tasks={quadrantTasks.urgent}
-                theme={{
-                  iconBg: 'bg-rose-500/10 text-rose-500 dark:bg-rose-500/15',
-                  cardBg: 'bg-rose-500/[0.02]',
-                  border: '',
-                }}
-                projectsMap={projectsMap}
-                onTaskClick={handleOpenTask}
-                onAddTask={handleCreateTaskInQuadrant}
-                onOpenInProject={handleOpenInProject}
-              />
+          <div className="flex flex-col divide-y divide-slate-200/80 dark:divide-slate-800/80 flex-1">
+            {/* Row 1: Important (Urgent & Plan) */}
+            <div className="flex flex-1 min-h-0">
+              {/* Left Row Header: Important */}
+              <div className="relative w-8 sm:w-9 shrink-0 flex items-center justify-center border-r border-slate-200/80 dark:border-slate-800/80 bg-slate-100/40 dark:bg-slate-900/50 select-none">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="rotate-90 whitespace-nowrap flex items-center gap-1.5">
+                    <Star size={11} className="text-amber-500 fill-amber-500/20 -rotate-90 shrink-0" />
+                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-500/90 font-mono">
+                      {t('important', 'Important')}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-              {/* Row 2: Delegate (Urgent & Not Important) */}
-              <QuadrantContainer
-                id="urgent_not_important"
-                title={t('quadrant_3_title', 'Delegate')}
-                subtitle={t('quadrant_3_desc', 'Interruptions & minor tasks')}
-                icon={<Clock size={14} />}
-                tasks={quadrantTasks.delegate}
-                theme={{
-                  iconBg: 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/15',
-                  cardBg: 'bg-amber-500/[0.02]',
-                  border: '',
-                }}
-                projectsMap={projectsMap}
-                onTaskClick={handleOpenTask}
-                onAddTask={handleCreateTaskInQuadrant}
-                onOpenInProject={handleOpenInProject}
-              />
+              {/* Row 1 Quadrants */}
+              <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200/80 dark:divide-slate-800/80 flex-1 min-w-0">
+                <QuadrantContainer
+                  id="urgent_important"
+                  title={t('quadrant_1_title', 'Urgent')}
+                  subtitle={t('quadrant_1_desc', 'Crises, deadlines & pressing issues')}
+                  icon={<Flame size={14} />}
+                  tasks={quadrantTasks.urgent}
+                  theme={{
+                    iconBg: 'bg-rose-500/10 text-rose-500 dark:bg-rose-500/15',
+                    cardBg: 'bg-rose-500/[0.02]',
+                    border: '',
+                  }}
+                  projectsMap={projectsMap}
+                  onTaskClick={handleOpenTask}
+                  onAddTask={handleCreateTaskInQuadrant}
+                  onOpenInProject={handleOpenInProject}
+                />
+
+                <QuadrantContainer
+                  id="not_urgent_important"
+                  title={t('quadrant_2_title', 'Plan')}
+                  subtitle={t('quadrant_2_desc', 'Planning, deep work & growth')}
+                  icon={<Star size={14} className="fill-current" />}
+                  tasks={quadrantTasks.plan}
+                  theme={{
+                    iconBg: 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/15',
+                    cardBg: 'bg-blue-500/[0.02]',
+                    border: '',
+                  }}
+                  projectsMap={projectsMap}
+                  onTaskClick={handleOpenTask}
+                  onAddTask={handleCreateTaskInQuadrant}
+                  onOpenInProject={handleOpenInProject}
+                />
+              </div>
             </div>
 
-            {/* Column 2: Not Urgent (Top: Plan, Bottom: Later) */}
-            <div className="flex flex-col divide-y divide-slate-200/80 dark:divide-slate-800/80 flex-1">
-              {/* Row 1: Plan (Not Urgent & Important) */}
-              <QuadrantContainer
-                id="not_urgent_important"
-                title={t('quadrant_2_title', 'Plan')}
-                subtitle={t('quadrant_2_desc', 'Planning, deep work & growth')}
-                icon={<Star size={14} className="fill-current" />}
-                tasks={quadrantTasks.plan}
-                theme={{
-                  iconBg: 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/15',
-                  cardBg: 'bg-blue-500/[0.02]',
-                  border: '',
-                }}
-                projectsMap={projectsMap}
-                onTaskClick={handleOpenTask}
-                onAddTask={handleCreateTaskInQuadrant}
-                onOpenInProject={handleOpenInProject}
-              />
+            {/* Row 2: Not Important (Delegate & Later) */}
+            <div className="flex flex-1 min-h-0">
+              {/* Left Row Header: Not Important */}
+              <div className="relative w-8 sm:w-9 shrink-0 flex items-center justify-center border-r border-slate-200/80 dark:border-slate-800/80 bg-slate-100/40 dark:bg-slate-900/50 select-none">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="rotate-90 whitespace-nowrap flex items-center gap-1.5">
+                    <Coffee size={11} className="text-slate-400 -rotate-90 shrink-0" />
+                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 font-mono">
+                      {t('not_important', 'Not Important')}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-              {/* Row 2: Later (Not Urgent & Not Important) */}
-              <QuadrantContainer
-                id="not_urgent_not_important"
-                title={t('quadrant_4_title', 'Later')}
-                subtitle={t('quadrant_4_desc', 'Time wasters & backlog')}
-                icon={<Coffee size={14} />}
-                tasks={quadrantTasks.later}
-                theme={{
-                  iconBg: 'bg-slate-500/10 text-slate-500 dark:bg-slate-400/15',
-                  cardBg: 'bg-slate-500/[0.02]',
-                  border: '',
-                }}
-                projectsMap={projectsMap}
-                onTaskClick={handleOpenTask}
-                onAddTask={handleCreateTaskInQuadrant}
-                onOpenInProject={handleOpenInProject}
-              />
+              {/* Row 2 Quadrants */}
+              <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200/80 dark:divide-slate-800/80 flex-1 min-w-0">
+                <QuadrantContainer
+                  id="urgent_not_important"
+                  title={t('quadrant_3_title', 'Delegate')}
+                  subtitle={t('quadrant_3_desc', 'Interruptions & minor tasks')}
+                  icon={<Clock size={14} />}
+                  tasks={quadrantTasks.delegate}
+                  theme={{
+                    iconBg: 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/15',
+                    cardBg: 'bg-amber-500/[0.02]',
+                    border: '',
+                  }}
+                  projectsMap={projectsMap}
+                  onTaskClick={handleOpenTask}
+                  onAddTask={handleCreateTaskInQuadrant}
+                  onOpenInProject={handleOpenInProject}
+                />
+
+                <QuadrantContainer
+                  id="not_urgent_not_important"
+                  title={t('quadrant_4_title', 'Later')}
+                  subtitle={t('quadrant_4_desc', 'Time wasters & backlog')}
+                  icon={<Coffee size={14} />}
+                  tasks={quadrantTasks.later}
+                  theme={{
+                    iconBg: 'bg-slate-500/10 text-slate-500 dark:bg-slate-400/15',
+                    cardBg: 'bg-slate-500/[0.02]',
+                    border: '',
+                  }}
+                  projectsMap={projectsMap}
+                  onTaskClick={handleOpenTask}
+                  onAddTask={handleCreateTaskInQuadrant}
+                  onOpenInProject={handleOpenInProject}
+                />
+              </div>
             </div>
           </div>
         </div>

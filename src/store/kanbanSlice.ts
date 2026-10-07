@@ -206,12 +206,45 @@ export const createKanbanSlice: StateCreator<
     }));
   },
 
-  deleteProject: (id) => {
-    set((state) => ({
-      projects: state.projects.filter((p) => p.id !== id),
-      tasks: state.tasks.filter((t) => t.projectId !== id),
-      lastOpenedProject: state.lastOpenedProject === id ? null : state.lastOpenedProject,
-    }));
+  moveAllTasks: (sourceProjectId, targetProjectId) => {
+    set((state) => {
+      const now = Date.now();
+      return {
+        tasks: state.tasks.map((t) =>
+          t.projectId === sourceProjectId ? { ...t, projectId: targetProjectId } : t
+        ),
+        projects: state.projects.map((p) =>
+          p.id === sourceProjectId || p.id === targetProjectId
+            ? { ...p, updatedAt: now }
+            : p
+        ),
+      };
+    });
+  },
+
+  deleteProject: (id, transferTasksToProjectId) => {
+    set((state) => {
+      const now = Date.now();
+      const updatedTasks = transferTasksToProjectId
+        ? state.tasks.map((t) =>
+            t.projectId === id ? { ...t, projectId: transferTasksToProjectId } : t
+          )
+        : state.tasks.filter((t) => t.projectId !== id);
+
+      const updatedProjects = state.projects
+        .filter((p) => p.id !== id)
+        .map((p) =>
+          transferTasksToProjectId && p.id === transferTasksToProjectId
+            ? { ...p, updatedAt: now }
+            : p
+        );
+
+      return {
+        projects: updatedProjects,
+        tasks: updatedTasks,
+        lastOpenedProject: state.lastOpenedProject === id ? null : state.lastOpenedProject,
+      };
+    });
   },
 
   reorderProjects: (activeId, overId) => {

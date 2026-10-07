@@ -174,8 +174,8 @@ export const BoardView: React.FC = () => {
     );
   };
 
-  const handleDeleteProject = () => {
-    deleteProject(id);
+  const handleDeleteProject = (transferToProjectId?: string) => {
+    deleteProject(id, transferToProjectId);
     navigate('/');
   };
 

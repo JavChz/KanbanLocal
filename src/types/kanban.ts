@@ -50,6 +50,7 @@ export interface KanbanState {
   moveTask: (id: string, newStatus: TaskStatus) => void;
   reorderTasks: (projectId: string, tasks: Task[]) => void;
   moveAndReorderTask: (activeId: string, overId: string, projectId: string) => void;
+  moveAllTasks: (sourceProjectId: string, targetProjectId: string) => void;
   
   // Project Actions
   addProject: (name: string, color: string, customId?: string, description?: string, deadline?: string) => string;
@@ -62,7 +63,7 @@ export interface KanbanState {
     description?: string,
     deadline?: string
   ) => void;
-  deleteProject: (id: string) => void;
+  deleteProject: (id: string, transferTasksToProjectId?: string) => void;
   reorderProjects: (activeId: string, overId: string) => void;
   
   // Settings / Globals

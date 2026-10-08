@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Archive, Edit, Sparkles } from 'lucide-react';
+import { Archive, Edit, ArrowDownWideNarrow } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { getColorStyles } from '../../utils/colors';
 import type { Project } from '../../types/kanban';
@@ -41,11 +41,11 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
             variant="secondary"
             size="sm"
             onClick={onPrioritize}
-            title={t('prioritize_toast', 'Tasks prioritized: Urgent at top, Later at bottom.')}
+            title={t('prioritize_toast', 'Tasks sorted by priority: Urgent at top, Later at bottom.')}
             className="flex items-center gap-1.5 hover:text-blue-600 dark:hover:text-blue-400 group cursor-pointer"
           >
-            <Sparkles size={14} className="text-amber-500 group-hover:rotate-12 transition-transform" />
-            <span>{t('prioritizer', 'Prioritizer')}</span>
+            <ArrowDownWideNarrow size={14} className="text-blue-500 dark:text-blue-400 group-hover:-translate-y-0.5 transition-transform" />
+            <span>{t('prioritizer', 'Sort by Priority')}</span>
           </Button>
         )}
 

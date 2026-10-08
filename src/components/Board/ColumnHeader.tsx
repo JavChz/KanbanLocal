@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Archive, Sparkles } from 'lucide-react';
+import { Plus, Archive, ArrowDownWideNarrow } from 'lucide-react';
 
 interface ColumnHeaderProps {
   title: string;
@@ -35,10 +35,10 @@ export const ColumnHeader: React.FC<ColumnHeaderProps> = ({
         {count > 1 && onPrioritize && (
           <button
             onClick={onPrioritize}
-            className="p-1 rounded-md text-slate-400 hover:text-amber-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group"
-            title={t('prioritize_column', 'Prioritize column (Eisenhower matrix)')}
+            className="p-1 rounded-md text-slate-400 hover:text-blue-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group"
+            title={t('prioritize_column', 'Sort column by priority (Eisenhower matrix)')}
           >
-            <Sparkles size={15} className="group-hover:rotate-12 transition-transform" />
+            <ArrowDownWideNarrow size={15} className="group-hover:-translate-y-0.5 transition-transform" />
           </button>
         )}
         {showArchiveAllDone && onArchiveAllDone && (

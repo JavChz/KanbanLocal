@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import { arrayMove } from '@dnd-kit/sortable';
 import type { KanbanState, Task, Project, TaskStatus, ProjectBackground } from '../types/kanban';
+import { prioritizeTasksByEisenhower } from '../utils/priority';
 
 export interface KanbanSlice {
   tasks: Task[];
@@ -11,6 +12,8 @@ export interface KanbanSlice {
   moveTask: (id: string, newStatus: TaskStatus) => void;
   reorderTasks: (projectId: string, tasks: Task[]) => void;
   moveAndReorderTask: (activeId: string, overId: string, projectId: string) => void;
+  moveAllTasks: (sourceProjectId: string, targetProjectId: string) => void;
+  prioritizeTasks: (projectId: string, columnStatus?: TaskStatus) => void;
   addProject: (name: string, color: string, customId?: string, description?: string, deadline?: string) => string;
   updateProject: (
     id: string,
@@ -21,7 +24,7 @@ export interface KanbanSlice {
     description?: string,
     deadline?: string
   ) => void;
-  deleteProject: (id: string) => void;
+  deleteProject: (id: string, transferTasksToProjectId?: string) => void;
   reorderProjects: (activeId: string, overId: string) => void;
 }
 
@@ -206,7 +209,7 @@ export const createKanbanSlice: StateCreator<
     }));
   },
 
-  moveAllTasks: (sourceProjectId, targetProjectId) => {
+  moveAllTasks: (sourceProjectId: string, targetProjectId: string) => {
     set((state) => {
       const now = Date.now();
       return {
@@ -222,7 +225,43 @@ export const createKanbanSlice: StateCreator<
     });
   },
 
-  deleteProject: (id, transferTasksToProjectId) => {
+  prioritizeTasks: (projectId: string, columnStatus?: TaskStatus) => {
+    set((state) => {
+      const otherTasks = state.tasks.filter((t) => t.projectId !== projectId);
+      const projectTasks = state.tasks.filter((t) => t.projectId === projectId);
+
+      let prioritizedProjectTasks: Task[];
+      if (columnStatus) {
+        // Prioritize only the specified column
+        const columnTasks = projectTasks.filter((t) => t.status === columnStatus);
+        const nonColumnTasks = projectTasks.filter((t) => t.status !== columnStatus);
+        const prioritizedCol = prioritizeTasksByEisenhower(columnTasks);
+        prioritizedProjectTasks = [...nonColumnTasks, ...prioritizedCol];
+      } else {
+        // Prioritize each column (TODO, IN_PROGRESS, DONE) individually
+        const statuses: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'DONE'];
+        const otherStatusTasks = projectTasks.filter(
+          (t) => !statuses.includes(t.status as TaskStatus)
+        );
+        const prioritizedColumns = statuses.flatMap((status) => {
+          const colTasks = projectTasks.filter((t) => t.status === status);
+          return prioritizeTasksByEisenhower(colTasks);
+        });
+        prioritizedProjectTasks = [...otherStatusTasks, ...prioritizedColumns];
+      }
+
+      const updatedProjects = state.projects.map((p) =>
+        p.id === projectId ? { ...p, updatedAt: Date.now() } : p
+      );
+
+      return {
+        tasks: [...otherTasks, ...prioritizedProjectTasks],
+        projects: updatedProjects,
+      };
+    });
+  },
+
+  deleteProject: (id: string, transferTasksToProjectId?: string) => {
     set((state) => {
       const now = Date.now();
       const updatedTasks = transferTasksToProjectId

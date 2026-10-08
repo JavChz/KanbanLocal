@@ -37,6 +37,7 @@ export const BoardView: React.FC = () => {
     updateProject,
     deleteProject,
     updateTask,
+    prioritizeTasks,
   } = useKanbanStore();
 
   const project = projects.find((p) => p.id === id);
@@ -189,6 +190,16 @@ export const BoardView: React.FC = () => {
     }
   };
 
+  const handlePrioritizeBoard = () => {
+    if (!id) return;
+    prioritizeTasks(id);
+  };
+
+  const handlePrioritizeColumn = (status: TaskStatus) => {
+    if (!id) return;
+    prioritizeTasks(id, status);
+  };
+
   return (
     <div
       className="flex flex-col gap-6 h-full animate-fade-in"
@@ -199,6 +210,7 @@ export const BoardView: React.FC = () => {
         project={project}
         onOpenArchive={() => setIsArchiveOpen(true)}
         onOpenEdit={() => setIsEditProjectOpen(true)}
+        onPrioritize={handlePrioritizeBoard}
       />
 
       {/* Board Drag and Drop Content */}
@@ -216,6 +228,7 @@ export const BoardView: React.FC = () => {
             tasks={tasksByStatus.TODO}
             onTaskClick={handleTaskClick}
             onAddTask={handleAddNewTask}
+            onPrioritize={() => handlePrioritizeColumn('TODO')}
           />
           <Column
             status="IN_PROGRESS"
@@ -223,6 +236,7 @@ export const BoardView: React.FC = () => {
             tasks={tasksByStatus.IN_PROGRESS}
             onTaskClick={handleTaskClick}
             onAddTask={handleAddNewTask}
+            onPrioritize={() => handlePrioritizeColumn('IN_PROGRESS')}
           />
           <Column
             status="DONE"
@@ -231,6 +245,7 @@ export const BoardView: React.FC = () => {
             onTaskClick={handleTaskClick}
             onAddTask={handleAddNewTask}
             onArchiveAllDone={handleArchiveAllDone}
+            onPrioritize={() => handlePrioritizeColumn('DONE')}
           />
         </div>
 

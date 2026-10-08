@@ -117,8 +117,11 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         isOpen={isOpen}
         onClose={onClose}
         title={t('edit_project')}
+        size="lg"
+        className="max-h-[88vh] flex flex-col"
+        contentClassName="flex-1 min-h-0 flex flex-col"
       >
-        <div className="flex flex-col gap-5 text-left">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-5 text-left pb-2">
           <div className="flex items-end gap-2.5">
             <div className="flex-1">
               <Input
@@ -218,33 +221,30 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
               </div>
             )}
           </div>
+        </div>
 
-          {/* Footer Actions */}
-          <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-800/30">
-            <Button
-              type="button"
-              variant="danger"
-              onClick={() => {
-                setDeleteTaskAction('move');
-                if (otherProjects.length > 0) {
-                  setDeleteTransferTargetId(otherProjects[0].id);
-                }
-                setIsDeleteConfirmOpen(true);
-              }}
-              className="flex items-center gap-1.5"
-            >
-              <Trash2 size={14} />
-              {t('delete')}
+        {/* Docked Footer Actions */}
+        <div className="flex justify-between items-center pt-3 border-t border-slate-200/60 dark:border-slate-800/60 shrink-0 mt-1">
+          <Button
+            type="button"
+            variant="danger"
+            onClick={() => {
+              setDeleteTaskAction('move');
+              setIsDeleteConfirmOpen(true);
+            }}
+            className="flex items-center gap-1.5"
+          >
+            <Trash2 size={14} />
+            {t('delete')}
+          </Button>
+
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" onClick={onClose}>
+              {t('cancel')}
             </Button>
-
-            <div className="flex gap-2">
-              <Button type="button" variant="secondary" onClick={onClose}>
-                {t('cancel')}
-              </Button>
-              <Button type="button" variant="primary" onClick={handleSave}>
-                {t('save')}
-              </Button>
-            </div>
+            <Button type="button" variant="primary" onClick={handleSave}>
+              {t('save')}
+            </Button>
           </div>
         </div>
       </Modal>

@@ -51,6 +51,7 @@ export interface KanbanState {
   reorderTasks: (projectId: string, tasks: Task[]) => void;
   moveAndReorderTask: (activeId: string, overId: string, projectId: string) => void;
   moveAllTasks: (sourceProjectId: string, targetProjectId: string) => void;
+  prioritizeTasks: (projectId: string, columnStatus?: TaskStatus) => void;
   
   // Project Actions
   addProject: (name: string, color: string, customId?: string, description?: string, deadline?: string) => string;

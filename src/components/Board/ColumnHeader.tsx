@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Archive } from 'lucide-react';
+import { Plus, Archive, Sparkles } from 'lucide-react';
 
 interface ColumnHeaderProps {
   title: string;
@@ -8,6 +8,7 @@ interface ColumnHeaderProps {
   showArchiveAllDone?: boolean;
   onArchiveAllDone?: () => void;
   onAddTask: () => void;
+  onPrioritize?: () => void;
 }
 
 export const ColumnHeader: React.FC<ColumnHeaderProps> = ({
@@ -16,6 +17,7 @@ export const ColumnHeader: React.FC<ColumnHeaderProps> = ({
   showArchiveAllDone,
   onArchiveAllDone,
   onAddTask,
+  onPrioritize,
 }) => {
   const { t } = useTranslation();
 
@@ -30,6 +32,15 @@ export const ColumnHeader: React.FC<ColumnHeaderProps> = ({
         </span>
       </div>
       <div className="flex items-center gap-1">
+        {count > 1 && onPrioritize && (
+          <button
+            onClick={onPrioritize}
+            className="p-1 rounded-md text-slate-400 hover:text-amber-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group"
+            title={t('prioritize_column', 'Prioritize column (Eisenhower matrix)')}
+          >
+            <Sparkles size={15} className="group-hover:rotate-12 transition-transform" />
+          </button>
+        )}
         {showArchiveAllDone && onArchiveAllDone && (
           <button
             onClick={onArchiveAllDone}

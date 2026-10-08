@@ -14,6 +14,7 @@ interface ColumnProps {
   onTaskClick: (task: Task, e: React.MouseEvent) => void;
   onAddTask: (title: string, status: TaskStatus, position?: 'top' | 'bottom') => void;
   onArchiveAllDone?: () => void;
+  onPrioritize?: () => void;
 }
 
 export const Column: React.FC<ColumnProps> = ({
@@ -23,6 +24,7 @@ export const Column: React.FC<ColumnProps> = ({
   onTaskClick,
   onAddTask,
   onArchiveAllDone,
+  onPrioritize,
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const [isAdding, setIsAdding] = useState(false);
@@ -75,6 +77,7 @@ export const Column: React.FC<ColumnProps> = ({
         showArchiveAllDone={status === 'DONE' && tasks.length > 0}
         onArchiveAllDone={onArchiveAllDone}
         onAddTask={handleStartAddTop}
+        onPrioritize={onPrioritize}
       />
 
       {/* Task List */}

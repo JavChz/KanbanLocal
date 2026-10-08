@@ -104,3 +104,63 @@ export const PRIORITY_CONFIG: Record<TaskPriority, PriorityMeta> = {
     isImportant: false,
   },
 };
+
+/**
+ * Eisenhower rank for prioritizing:
+ * 1: Urgent & Important (Urgent / Crises / Do immediately)
+ * 2: Not Urgent & Important (Plan / Deep work / Schedule)
+ * 3: Urgent & Not Important (Delegate / Interruptions)
+ * 4: Neither Urgent nor Important (Later / Backlog)
+ * null: No priority (retains exact position)
+ */
+export function getEisenhowerRank(priority?: TaskPriority): number | null {
+  switch (priority) {
+    case 'urgent_important':
+      return 1;
+    case 'not_urgent_important':
+      return 2;
+    case 'urgent_not_important':
+      return 3;
+    case 'not_urgent_not_important':
+      return 4;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Prioritizes a list of tasks based on Eisenhower matrix while strictly preserving:
+ * 1. The exact positions/indices of tasks without priority.
+ * 2. The relative existing order among tasks within the same priority quadrant (stable sort).
+ */
+export function prioritizeTasksByEisenhower<T extends { priority?: TaskPriority }>(tasks: T[]): T[] {
+  const result = [...tasks];
+  const prioritizedSlots: number[] = [];
+  const prioritizedItems: T[] = [];
+
+  tasks.forEach((task, index) => {
+    const rank = getEisenhowerRank(task.priority);
+    if (rank !== null) {
+      prioritizedSlots.push(index);
+      prioritizedItems.push(task);
+    }
+  });
+
+  if (prioritizedItems.length <= 1) {
+    return result;
+  }
+
+  // Stable sort prioritized items by Eisenhower rank
+  prioritizedItems.sort((a, b) => {
+    const rankA = getEisenhowerRank(a.priority)!;
+    const rankB = getEisenhowerRank(b.priority)!;
+    return rankA - rankB;
+  });
+
+  // Re-insert into original prioritized slot positions
+  prioritizedSlots.forEach((slotIndex, i) => {
+    result[slotIndex] = prioritizedItems[i];
+  });
+
+  return result;
+}

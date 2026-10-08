@@ -189,6 +189,10 @@ const resources = {
       board_has_tasks_warning: "This board contains {{count}} task(s).",
       delete_and_move: "Delete Board & Move Tasks",
       delete_everything: "Delete Board & Tasks",
+      prioritizer: "Prioritizer",
+      prioritize_board: "Prioritize Board",
+      prioritize_column: "Prioritize column (Eisenhower matrix)",
+      prioritize_toast: "Tasks prioritized: Urgent at top, Later at bottom.",
     }
   },
   fr: {
@@ -378,6 +382,10 @@ const resources = {
       board_has_tasks_warning: "Ce tableau contient {{count}} tâche(s).",
       delete_and_move: "Supprimer le tableau et déplacer les tâches",
       delete_everything: "Supprimer le tableau et les tâches",
+      prioritizer: "Prioriser",
+      prioritize_board: "Prioriser le tableau",
+      prioritize_column: "Prioriser la colonne (matrice d'Eisenhower)",
+      prioritize_toast: "Tâches priorisées : Urgentes en haut, Plus tard en bas.",
     }
   },
   ja: {
@@ -567,6 +575,10 @@ const resources = {
       board_has_tasks_warning: "このボードには{{count}}件のタスクがあります。",
       delete_and_move: "ボードを削除してタスクを移動",
       delete_everything: "ボードとタスクを削除",
+      prioritizer: "優先順位づけ",
+      prioritize_board: "ボードを優先順位で整理",
+      prioritize_column: "列を優先順位で整理（アイゼンハワーマトリクス）",
+      prioritize_toast: "タスクを優先度順に並べ替えました（優先度なしの位置は保持）。",
     }
   },
   es: {
@@ -756,6 +768,10 @@ const resources = {
       board_has_tasks_warning: "Este tablero contiene {{count}} tarea(s).",
       delete_and_move: "Eliminar tablero y mover tareas",
       delete_everything: "Eliminar tablero y tareas",
+      prioritizer: "Priorizador",
+      prioritize_board: "Priorizar Tablero",
+      prioritize_column: "Priorizar columna (matriz de Eisenhower)",
+      prioritize_toast: "Tareas priorizadas: Urgentes arriba, Después abajo.",
     }
   }
 };

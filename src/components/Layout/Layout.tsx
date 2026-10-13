@@ -6,6 +6,7 @@ import { SettingsModal } from './SettingsModal';
 import { MobileHeader } from './MobileHeader';
 import { Sidebar } from './Sidebar';
 import { useProjectBackground } from '../../hooks/useProjectBackground';
+import { ToastContainer } from '../ui/ToastContainer';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -110,6 +111,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           {children}
         </div>
       </main>
+
+      {/* Global Toast Notifications */}
+      <ToastContainer />
     </div>
   );
 };

@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useKanbanStore } from '../../store/useKanbanStore';
 import type { Project } from '../../types/kanban';
-import { Home, Globe, Settings, Plus, Circle, ChevronLeft, GripVertical, Layers } from 'lucide-react';
+import { Home, Globe, Settings, Plus, Circle, ChevronLeft, GripVertical, Layers, ArrowRight } from 'lucide-react';
 import { AppLogo } from '../ui/AppLogo';
 import { useTranslation } from 'react-i18next';
 import { getColorStyles } from '../../utils/colors';
+import { useDragStore } from '../../store/useDragStore';
 import {
   DndContext,
   PointerSensor,
@@ -44,6 +45,12 @@ const SortableSidebarProject: React.FC<SortableSidebarProjectProps> = ({
     isDragging,
   } = useSortable({ id: project.id });
 
+  const { t } = useTranslation();
+  const isHovered = useDragStore((s) => s.hoveredProjectId === project.id);
+  const isTaskDragging = useDragStore((s) => !!s.draggedTaskId);
+  const sourceProjectId = useDragStore((s) => s.draggedTaskSourceProjectId);
+  const isDropTarget = isTaskDragging && sourceProjectId !== project.id;
+
   const colorStyles = getColorStyles(project.color);
 
   const style: React.CSSProperties = {
@@ -59,6 +66,7 @@ const SortableSidebarProject: React.FC<SortableSidebarProjectProps> = ({
       style={style}
       {...attributes}
       {...listeners}
+      data-project-drop-id={project.id}
       onClick={(e) => {
         if (transform && (Math.abs(transform.x) > 3 || Math.abs(transform.y) > 3)) {
           e.preventDefault();
@@ -67,7 +75,11 @@ const SortableSidebarProject: React.FC<SortableSidebarProjectProps> = ({
         onSelect();
       }}
       className={`group flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-all duration-150 cursor-grab active:cursor-grabbing select-none ${
-        isActive
+        isHovered
+          ? 'ring-2 ring-blue-500 bg-blue-500/20 text-blue-700 dark:text-blue-300 scale-[1.03] shadow-md font-semibold'
+          : isDropTarget
+          ? 'border border-dashed border-blue-400/40 dark:border-blue-500/40 bg-blue-500/5 hover:bg-blue-500/15 text-slate-700 dark:text-slate-300'
+          : isActive
           ? 'bg-blue-600/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium'
           : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/55 dark:hover:bg-slate-800/40'
       } ${isDragging ? 'shadow-sm ring-1 ring-blue-500/30' : ''}`}
@@ -76,10 +88,17 @@ const SortableSidebarProject: React.FC<SortableSidebarProjectProps> = ({
         <Circle size={8} className={`fill-current ${colorStyles.text} shrink-0`} />
         <span className="truncate flex-1">{project.name}</span>
       </div>
-      <GripVertical
-        size={13}
-        className="text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-1"
-      />
+      {isHovered ? (
+        <span className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-300 bg-blue-500/25 px-1.5 py-0.5 rounded-md shrink-0 ml-1 animate-pulse">
+          <ArrowRight size={11} />
+          {t('drop_to_move', 'Move')}
+        </span>
+      ) : (
+        <GripVertical
+          size={13}
+          className="text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-1"
+        />
+      )}
     </div>
   );
 };

@@ -17,9 +17,11 @@ import {
   closestCorners,
   DragOverlay,
 } from '@dnd-kit/core';
-import type { DragStartEvent, DragOverEvent } from '@dnd-kit/core';
+import type { DragStartEvent, DragOverEvent, DragEndEvent } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useTranslation } from 'react-i18next';
+import { useDragStore } from '../store/useDragStore';
+import { toast } from '../store/useToastStore';
 
 export const BoardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -88,6 +90,29 @@ export const BoardView: React.FC = () => {
     })
   );
 
+  // Track pointer while dragging to detect hover over sidebar projects
+  useEffect(() => {
+    if (!activeId) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const element = document.elementFromPoint(e.clientX, e.clientY);
+      const projectEl = element?.closest('[data-project-drop-id]');
+      const targetProjectId = projectEl?.getAttribute('data-project-drop-id') || null;
+
+      // Only mark as drop target if it's a different project than current board
+      const validDropTargetId = targetProjectId && targetProjectId !== id ? targetProjectId : null;
+
+      if (validDropTargetId !== useDragStore.getState().hoveredProjectId) {
+        useDragStore.getState().setHoveredProject(validDropTargetId);
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+    };
+  }, [activeId, id]);
+
   // If project doesn't exist, return early (all hooks have been called)
   if (!project || !id) return null;
 
@@ -99,7 +124,11 @@ export const BoardView: React.FC = () => {
   };
 
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
+    const taskId = event.active.id as string;
+    setActiveId(taskId);
+    if (id) {
+      useDragStore.getState().setDraggedTask(taskId, id);
+    }
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -129,8 +158,44 @@ export const BoardView: React.FC = () => {
     }
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = (event: DragEndEvent) => {
+    let targetProjectId = useDragStore.getState().hoveredProjectId;
+
+    // Fallback: calculate drop coordinates from activatorEvent + delta if pointermove didn't catch final coordinate
+    if (!targetProjectId && event.activatorEvent && 'clientX' in event.activatorEvent) {
+      const pe = event.activatorEvent as PointerEvent;
+      const dropX = pe.clientX + event.delta.x;
+      const dropY = pe.clientY + event.delta.y;
+      const element = document.elementFromPoint(dropX, dropY);
+      const projectEl = element?.closest('[data-project-drop-id]');
+      const candidateId = projectEl?.getAttribute('data-project-drop-id') || null;
+      if (candidateId && candidateId !== id) {
+        targetProjectId = candidateId;
+      }
+    }
+
+    const currentTaskId = activeId;
+
+    if (currentTaskId && targetProjectId && targetProjectId !== id) {
+      const targetProject = projects.find((p) => p.id === targetProjectId);
+      const taskToMove = tasks.find((t) => t.id === currentTaskId);
+
+      if (targetProject && taskToMove) {
+        updateTask(currentTaskId, { projectId: targetProjectId });
+        toast.success(
+          t('task_moved_to_project', { task: taskToMove.title, project: targetProject.name }),
+          {
+            action: {
+              label: t('view', 'View'),
+              onClick: () => navigate(`/project/${targetProjectId}`),
+            },
+          }
+        );
+      }
+    }
+
     setActiveId(null);
+    useDragStore.getState().clearDrag();
   };
 
   const handleAddNewTask = (title: string, status: TaskStatus, position?: 'top' | 'bottom') => {
@@ -221,7 +286,7 @@ export const BoardView: React.FC = () => {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex-1 flex flex-col md:flex-row gap-6 items-start overflow-x-auto pb-4">
+        <div className="flex-1 flex flex-col md:flex-row gap-6 w-full items-stretch md:items-start overflow-x-auto pb-4">
           <Column
             status="TODO"
             title={t('todo')}
@@ -252,7 +317,7 @@ export const BoardView: React.FC = () => {
         {createPortal(
           <DragOverlay>
             {activeId ? (
-              <div className="glass-card p-4.5 rounded-xl text-sm font-medium text-slate-800 dark:text-slate-100 shadow-xl border-blue-500/50 scale-[1.03] rotate-[1.5deg] cursor-grabbing select-none opacity-90">
+              <div className="glass-card p-4.5 rounded-xl text-sm font-medium text-slate-800 dark:text-slate-100 shadow-xl border-blue-500/50 scale-[1.03] rotate-[1.5deg] cursor-grabbing select-none opacity-90 pointer-events-none">
                 {tasks.find((t) => t.id === activeId)?.title}
               </div>
             ) : null}

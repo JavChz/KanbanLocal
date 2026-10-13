@@ -193,6 +193,9 @@ const resources = {
       prioritize_board: "Sort Board by Priority",
       prioritize_column: "Sort column by priority (Eisenhower matrix)",
       prioritize_toast: "Tasks sorted by priority: Urgent at top, Later at bottom.",
+      task_moved_to_project: "Moved \"{{task}}\" to \"{{project}}\"",
+      drop_to_move: "Drop to move",
+      view: "View",
     }
   },
   fr: {
@@ -386,6 +389,9 @@ const resources = {
       prioritize_board: "Trier le tableau par priorité",
       prioritize_column: "Trier la colonne par priorité (matrice d'Eisenhower)",
       prioritize_toast: "Tâches triées par priorité : Urgentes en haut, Plus tard en bas.",
+      task_moved_to_project: "« {{task}} » déplacé vers « {{project}} »",
+      drop_to_move: "Déposer pour déplacer",
+      view: "Voir",
     }
   },
   ja: {
@@ -579,6 +585,9 @@ const resources = {
       prioritize_board: "ボードを優先度で並べ替え",
       prioritize_column: "列を優先度で並べ替え（アイゼンハワーマトリクス）",
       prioritize_toast: "タスクを優先度順に並べ替えました（緊急が上、後回しが下）。",
+      task_moved_to_project: "「{{task}}」を「{{project}}」に移動しました",
+      drop_to_move: "ドロップして移動",
+      view: "表示",
     }
   },
   es: {
@@ -772,6 +781,9 @@ const resources = {
       prioritize_board: "Ordenar tablero por prioridad",
       prioritize_column: "Ordenar columna por prioridad (matriz de Eisenhower)",
       prioritize_toast: "Tareas ordenadas por prioridad: Urgentes arriba, Después abajo.",
+      task_moved_to_project: "Se movió \"{{task}}\" a \"{{project}}\"",
+      drop_to_move: "Soltar para mover",
+      view: "Ver",
     }
   }
 };

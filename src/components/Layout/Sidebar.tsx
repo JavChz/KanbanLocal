@@ -67,6 +67,21 @@ const SortableSidebarProject: React.FC<SortableSidebarProjectProps> = ({
       {...attributes}
       {...listeners}
       data-project-drop-id={project.id}
+      onPointerEnter={() => {
+        if (isDropTarget) {
+          useDragStore.getState().setHoveredProject(project.id);
+        }
+      }}
+      onPointerLeave={() => {
+        if (isDropTarget && useDragStore.getState().hoveredProjectId === project.id) {
+          useDragStore.getState().setHoveredProject(null);
+        }
+      }}
+      onPointerUp={() => {
+        if (isDropTarget) {
+          useDragStore.getState().setHoveredProject(project.id);
+        }
+      }}
       onClick={(e) => {
         if (transform && (Math.abs(transform.x) > 3 || Math.abs(transform.y) > 3)) {
           e.preventDefault();

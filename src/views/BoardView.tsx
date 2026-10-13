@@ -90,16 +90,28 @@ export const BoardView: React.FC = () => {
     })
   );
 
+  const lastCoordRef = React.useRef<{ x: number; y: number } | null>(null);
+
   // Track pointer while dragging to detect hover over sidebar projects
   useEffect(() => {
     if (!activeId) return;
 
-    const handlePointerMove = (e: PointerEvent) => {
-      const element = document.elementFromPoint(e.clientX, e.clientY);
-      const projectEl = element?.closest('[data-project-drop-id]');
-      const targetProjectId = projectEl?.getAttribute('data-project-drop-id') || null;
+    const getProjectIdAtPoint = (x: number, y: number): string | null => {
+      if (typeof document.elementsFromPoint !== 'function') {
+        const el = document.elementFromPoint(x, y);
+        return el?.getAttribute('data-project-drop-id') || el?.closest('[data-project-drop-id]')?.getAttribute('data-project-drop-id') || null;
+      }
+      const elements = document.elementsFromPoint(x, y);
+      for (const el of elements) {
+        const projId = el.getAttribute('data-project-drop-id') || el.closest('[data-project-drop-id]')?.getAttribute('data-project-drop-id');
+        if (projId) return projId;
+      }
+      return null;
+    };
 
-      // Only mark as drop target if it's a different project than current board
+    const handlePointerMove = (e: PointerEvent) => {
+      lastCoordRef.current = { x: e.clientX, y: e.clientY };
+      const targetProjectId = getProjectIdAtPoint(e.clientX, e.clientY);
       const validDropTargetId = targetProjectId && targetProjectId !== id ? targetProjectId : null;
 
       if (validDropTargetId !== useDragStore.getState().hoveredProjectId) {
@@ -107,9 +119,21 @@ export const BoardView: React.FC = () => {
       }
     };
 
-    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    const handlePointerUp = (e: PointerEvent) => {
+      lastCoordRef.current = { x: e.clientX, y: e.clientY };
+      const targetProjectId = getProjectIdAtPoint(e.clientX, e.clientY);
+      const validDropTargetId = targetProjectId && targetProjectId !== id ? targetProjectId : null;
+      if (validDropTargetId) {
+        useDragStore.getState().setHoveredProject(validDropTargetId);
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { capture: true, passive: true });
+    window.addEventListener('pointerup', handlePointerUp, { capture: true, passive: true });
+
     return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointermove', handlePointerMove, { capture: true });
+      window.removeEventListener('pointerup', handlePointerUp, { capture: true });
     };
   }, [activeId, id]);
 
@@ -159,22 +183,44 @@ export const BoardView: React.FC = () => {
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    const getProjectIdAtPoint = (x: number, y: number): string | null => {
+      if (typeof document.elementsFromPoint !== 'function') {
+        const el = document.elementFromPoint(x, y);
+        return el?.getAttribute('data-project-drop-id') || el?.closest('[data-project-drop-id]')?.getAttribute('data-project-drop-id') || null;
+      }
+      const elements = document.elementsFromPoint(x, y);
+      for (const el of elements) {
+        const projId = el.getAttribute('data-project-drop-id') || el.closest('[data-project-drop-id]')?.getAttribute('data-project-drop-id');
+        if (projId) return projId;
+      }
+      return null;
+    };
+
     let targetProjectId = useDragStore.getState().hoveredProjectId;
 
-    // Fallback: calculate drop coordinates from activatorEvent + delta if pointermove didn't catch final coordinate
-    if (!targetProjectId && event.activatorEvent && 'clientX' in event.activatorEvent) {
-      const pe = event.activatorEvent as PointerEvent;
-      const dropX = pe.clientX + event.delta.x;
-      const dropY = pe.clientY + event.delta.y;
-      const element = document.elementFromPoint(dropX, dropY);
-      const projectEl = element?.closest('[data-project-drop-id]');
-      const candidateId = projectEl?.getAttribute('data-project-drop-id') || null;
+    // Check last known pointer coordinates captured on pointermove / pointerup
+    if (!targetProjectId && lastCoordRef.current) {
+      const candidateId = getProjectIdAtPoint(lastCoordRef.current.x, lastCoordRef.current.y);
       if (candidateId && candidateId !== id) {
         targetProjectId = candidateId;
       }
     }
 
-    const currentTaskId = activeId;
+    // Fallback: calculate drop coordinates from activatorEvent + delta if available
+    if (!targetProjectId && event.activatorEvent) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rawEvent = (event.activatorEvent as any).nativeEvent || event.activatorEvent;
+      if (typeof rawEvent.clientX === 'number') {
+        const dropX = rawEvent.clientX + (event.delta?.x || 0);
+        const dropY = rawEvent.clientY + (event.delta?.y || 0);
+        const candidateId = getProjectIdAtPoint(dropX, dropY);
+        if (candidateId && candidateId !== id) {
+          targetProjectId = candidateId;
+        }
+      }
+    }
+
+    const currentTaskId = activeId || useDragStore.getState().draggedTaskId;
 
     if (currentTaskId && targetProjectId && targetProjectId !== id) {
       const targetProject = projects.find((p) => p.id === targetProjectId);
@@ -195,6 +241,7 @@ export const BoardView: React.FC = () => {
     }
 
     setActiveId(null);
+    lastCoordRef.current = null;
     useDragStore.getState().clearDrag();
   };
 
@@ -315,7 +362,7 @@ export const BoardView: React.FC = () => {
         </div>
 
         {createPortal(
-          <DragOverlay>
+          <DragOverlay className="pointer-events-none" style={{ pointerEvents: 'none' }}>
             {activeId ? (
               <div className="glass-card p-4.5 rounded-xl text-sm font-medium text-slate-800 dark:text-slate-100 shadow-xl border-blue-500/50 scale-[1.03] rotate-[1.5deg] cursor-grabbing select-none opacity-90 pointer-events-none">
                 {tasks.find((t) => t.id === activeId)?.title}

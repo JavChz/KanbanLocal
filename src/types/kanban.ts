@@ -17,6 +17,8 @@ export interface Task {
   links?: string[];
   deadline?: string;       // Deadline date (YYYY-MM-DD)
   archived?: boolean;      // Archiving status
+  createdAt?: number;      // Timestamp of creation
+  archivedAt?: number;     // Timestamp when task was archived
   priority?: TaskPriority; // Eisenhower Priority level
   isUrgent?: boolean;      // Direct urgency flag
   isImportant?: boolean;   // Direct importance flag

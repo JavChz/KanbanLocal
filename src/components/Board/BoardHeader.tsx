@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Archive, Edit, ArrowDownWideNarrow } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { getColorStyles } from '../../utils/colors';
+import { useKanbanStore } from '../../store/useKanbanStore';
 import type { Project } from '../../types/kanban';
 
 interface BoardHeaderProps {
@@ -21,6 +22,9 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   const { t } = useTranslation();
   const colorStyles = getColorStyles(project.color);
   const hasBgImage = project.background && (project.background.type === 'image' || project.background.type === 'custom');
+  const archivedCount = useKanbanStore((state) =>
+    state.tasks.filter((t) => t.projectId === project.id && t.archived).length
+  );
 
   return (
     <div
@@ -56,7 +60,12 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           className="flex items-center gap-1.5"
         >
           <Archive size={14} />
-          {t('see_archive')}
+          <span>{t('see_archive')}</span>
+          {archivedCount > 0 && (
+            <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-3xs font-bold bg-slate-200/90 dark:bg-slate-700/80 text-slate-700 dark:text-slate-200">
+              {archivedCount}
+            </span>
+          )}
         </Button>
 
         <Button

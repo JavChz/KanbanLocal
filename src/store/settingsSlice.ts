@@ -86,6 +86,8 @@ export const createSettingsSlice: StateCreator<
             links: Array.isArray(t.links) && t.links.every((l: unknown) => typeof l === 'string') ? t.links : [],
             deadline: typeof t.deadline === 'string' ? t.deadline : undefined,
             archived: typeof t.archived === 'boolean' ? t.archived : undefined,
+            createdAt: typeof t.createdAt === 'number' ? t.createdAt : undefined,
+            archivedAt: typeof t.archivedAt === 'number' ? t.archivedAt : undefined,
             priority,
             isUrgent,
             isImportant,

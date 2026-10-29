@@ -38,9 +38,12 @@ export const createKanbanSlice: StateCreator<
   projects: [],
 
   addTask: (taskData, position = 'bottom') => {
+    const now = Date.now();
     const newTask: Task = {
       ...taskData,
       id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 11),
+      createdAt: taskData.createdAt ?? now,
+      archivedAt: taskData.archived ? (taskData.archivedAt ?? now) : undefined,
     };
     set((state) => {
       const updatedProjects = state.projects.map((p) =>
@@ -78,7 +81,26 @@ export const createKanbanSlice: StateCreator<
       });
 
       return {
-        tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updatedFields } : t)),
+        tasks: state.tasks.map((t) => {
+          if (t.id !== id) return t;
+
+          let computedArchivedAt = t.archivedAt;
+          if (updatedFields.archived !== undefined) {
+            if (updatedFields.archived) {
+              computedArchivedAt = updatedFields.archivedAt ?? t.archivedAt ?? Date.now();
+            } else {
+              computedArchivedAt = undefined;
+            }
+          } else if (updatedFields.archivedAt !== undefined) {
+            computedArchivedAt = updatedFields.archivedAt;
+          }
+
+          return {
+            ...t,
+            ...updatedFields,
+            archivedAt: computedArchivedAt,
+          };
+        }),
         projects: updatedProjects,
       };
     });

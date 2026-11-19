@@ -59,8 +59,8 @@ test.describe.skip('KanbanLocal E2E Tests', () => {
     await page.locator('input[placeholder="example.com"]').fill('https://playwright.dev');
     await page.locator('input[placeholder="example.com"]').press('Enter');
 
-    // Save details
-    await page.locator('button:has-text("Save")').click();
+    // Close details (changes are auto-saved)
+    await page.locator('button:has-text("Close")').click();
 
     // 4. Verify in Global View
     await page.locator('nav').locator('a:has-text("Global View")').click();

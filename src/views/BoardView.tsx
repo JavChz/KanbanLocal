@@ -61,7 +61,7 @@ export const BoardView: React.FC = () => {
   // Derive task modal selection cleanly from either explicit click or ?task= param
   const taskIdParam = searchParams.get('task');
   const hasMatchingParamTask = Boolean(
-    taskIdParam && projectTasks.some((t) => t.id === taskIdParam)
+    taskIdParam && tasks.some((t) => t.id === taskIdParam)
   );
   const effectiveTaskId = isTaskModalOpen ? selectedTaskId : hasMatchingParamTask ? taskIdParam : null;
   const effectiveTaskModalOpen = isTaskModalOpen || hasMatchingParamTask;

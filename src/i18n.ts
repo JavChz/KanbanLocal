@@ -215,6 +215,11 @@ const resources = {
       created_date_label: "Created",
       archived_date_label: "Archived",
       date_unknown: "Unknown date",
+      close: "Close",
+      auto_save: "Auto-save",
+      saving: "Saving...",
+      saved: "Saved",
+      title_required: "Title is required",
     }
   },
   fr: {
@@ -430,6 +435,11 @@ const resources = {
       created_date_label: "Créé",
       archived_date_label: "Archivé",
       date_unknown: "Date inconnue",
+      close: "Fermer",
+      auto_save: "Sauvegarde auto",
+      saving: "Enregistrement...",
+      saved: "Enregistré",
+      title_required: "Le titre est requis",
     }
   },
   ja: {
@@ -645,6 +655,11 @@ const resources = {
       created_date_label: "作成日",
       archived_date_label: "アーカイブ日",
       date_unknown: "日時不明",
+      close: "閉じる",
+      auto_save: "自動保存",
+      saving: "保存中...",
+      saved: "保存済み",
+      title_required: "タイトルは必須です",
     }
   },
   es: {
@@ -860,6 +875,11 @@ const resources = {
       created_date_label: "Creado",
       archived_date_label: "Archivado",
       date_unknown: "Fecha desconocida",
+      close: "Cerrar",
+      auto_save: "Guardado auto",
+      saving: "Guardando...",
+      saved: "Guardado",
+      title_required: "El título es obligatorio",
     }
   }
 };

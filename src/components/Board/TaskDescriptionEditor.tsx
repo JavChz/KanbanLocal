@@ -19,10 +19,11 @@ import { MarkdownPreview } from '../ui/MarkdownPreview';
 
 interface TaskDescriptionEditorProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, immediate?: boolean) => void;
+  onBlur?: () => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
-  onSave?: () => void;
+  onClose?: () => void;
   placeholder?: string;
 }
 
@@ -31,9 +32,10 @@ type EditorMode = 'write' | 'preview';
 export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
   value,
   onChange,
+  onBlur,
   isExpanded = false,
   onToggleExpand,
-  onSave,
+  onClose,
   placeholder,
 }) => {
   const { t } = useTranslation();
@@ -106,10 +108,10 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
 
   // Keyboard navigation & shortcuts
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Save on Ctrl/Cmd + Enter
+    // Close modal (and flush auto-save) on Ctrl/Cmd + Enter
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      onSave?.();
+      onClose?.();
       return;
     }
 
@@ -139,16 +141,16 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
     let currentTaskCount = 0;
     const lines = value.split('\n');
     const newLines = lines.map((line) => {
-      if (/^[-*]\s*\[([ xX])\]/.test(line)) {
+      if (/^\s*[-*]\s*\[([ xX])\]/.test(line)) {
         if (currentTaskCount === taskIndex) {
           currentTaskCount++;
-          return line.replace(/^([ -*]*\[)([ xX])(\])/, `$1${newChecked ? 'x' : ' '}$3`);
+          return line.replace(/^(\s*[-*]\s*\[)([ xX])(\])/, `$1${newChecked ? 'x' : ' '}$3`);
         }
         currentTaskCount++;
       }
       return line;
     });
-    onChange(newLines.join('\n'));
+    onChange(newLines.join('\n'), true);
   };
 
   return (
@@ -178,7 +180,10 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setMode('preview')}
+              onClick={() => {
+                onBlur?.();
+                setMode('preview');
+              }}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                 mode === 'preview'
                   ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs'
@@ -307,6 +312,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
                 ref={textareaRef}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
+                onBlur={onBlur}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder || t('task_description')}
                 rows={isExpanded ? 14 : 5}
@@ -361,7 +367,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
           <kbd className="px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-800 font-mono text-2xs">
             Ctrl + Enter
           </kbd>{' '}
-          {t('save', 'to save')}
+          {t('close', 'Close')}
         </div>
       </div>
     </div>

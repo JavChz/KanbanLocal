@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Task, TaskPriority } from '../../types/kanban';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
@@ -7,13 +7,27 @@ import { ConfirmModal } from '../ui/ConfirmModal';
 import { Select } from '../ui/Select';
 import { useKanbanStore } from '../../store/useKanbanStore';
 import { toast } from '../../store/useToastStore';
-import { Trash2, Archive, ArchiveRestore, Maximize2, Minimize2, BookOpen } from 'lucide-react';
+import {
+  Trash2,
+  Archive,
+  ArchiveRestore,
+  Maximize2,
+  Minimize2,
+  BookOpen,
+  Check,
+  LoaderCircle,
+  AlertCircle,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { resolveProjectColorVar } from '../../utils/colors';
 import { TaskTagsEditor } from './TaskTagsEditor';
 import { TaskLinksEditor } from './TaskLinksEditor';
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
 import { TaskPrioritySelector } from './TaskPrioritySelector';
+
+const TEXT_AUTOSAVE_DEBOUNCE_MS = 400;
+
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'invalid_title';
 
 interface TaskModalProps {
   task: Task | null;
@@ -49,6 +63,29 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
     task.isImportant ?? (task.priority === 'urgent_important' || task.priority === 'not_urgent_important')
   );
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+
+  const taskIdRef = useRef(task.id);
+  const updateTaskRef = useRef(updateTask);
+  const debounceTimerRef = useRef<number | null>(null);
+  const isDeletedRef = useRef(false);
+  const hasSavedRef = useRef(false);
+  const latestTextRef = useRef({
+    title: task.title || '',
+    description: task.description || '',
+  });
+  const lastSavedTextRef = useRef({
+    title: (task.title || '').trim(),
+    description: (task.description || '').trim(),
+  });
+  const lastSavedDeadlineRef = useRef<string | undefined>(
+    (task.deadline || '').trim() || undefined
+  );
+
+  useEffect(() => {
+    taskIdRef.current = task.id;
+    updateTaskRef.current = updateTask;
+  }, [task.id, updateTask]);
 
   const [isExpanded, setIsExpanded] = useState<boolean>(() => {
     try {
@@ -83,28 +120,183 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  const handleSave = () => {
-    if (!title.trim()) return;
-    updateTask(task.id, {
-      title: title.trim(),
-      description: description.trim(),
-      tags,
-      links,
-      deadline: deadline.trim() || undefined,
-      projectId,
-      priority,
-      isUrgent,
-      isImportant,
-    });
+  const flushPendingTextSaves = useCallback((updateUiStatus = true) => {
+    if (debounceTimerRef.current !== null) {
+      window.clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    if (isDeletedRef.current) return;
+
+    const trimmedTitle = latestTextRef.current.title.trim();
+    const trimmedDescription = latestTextRef.current.description.trim();
+
+    const patch: Partial<Omit<Task, 'id'>> = {};
+    if (trimmedTitle && trimmedTitle !== lastSavedTextRef.current.title) {
+      patch.title = trimmedTitle;
+    }
+    if (trimmedDescription !== lastSavedTextRef.current.description) {
+      patch.description = trimmedDescription;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      updateTaskRef.current(taskIdRef.current, patch);
+      if (patch.title !== undefined) {
+        lastSavedTextRef.current.title = patch.title;
+      }
+      if (patch.description !== undefined) {
+        lastSavedTextRef.current.description = patch.description;
+      }
+      hasSavedRef.current = true;
+      if (updateUiStatus) {
+        setSaveStatus(trimmedTitle ? 'saved' : 'invalid_title');
+      }
+    } else if (updateUiStatus) {
+      if (!trimmedTitle) {
+        setSaveStatus('invalid_title');
+      } else {
+        setSaveStatus(hasSavedRef.current ? 'saved' : 'idle');
+      }
+    }
+  }, []);
+
+  const scheduleTextSave = useCallback(() => {
+    if (isDeletedRef.current) return;
+
+    if (debounceTimerRef.current !== null) {
+      window.clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+
+    const trimmedTitle = latestTextRef.current.title.trim();
+    const trimmedDescription = latestTextRef.current.description.trim();
+    const hasTitleChange = Boolean(trimmedTitle) && trimmedTitle !== lastSavedTextRef.current.title;
+    const hasDescriptionChange = trimmedDescription !== lastSavedTextRef.current.description;
+
+    if (!trimmedTitle) {
+      setSaveStatus('invalid_title');
+      if (hasDescriptionChange) {
+        debounceTimerRef.current = window.setTimeout(
+          () => flushPendingTextSaves(true),
+          TEXT_AUTOSAVE_DEBOUNCE_MS
+        );
+      }
+      return;
+    }
+
+    if (!hasTitleChange && !hasDescriptionChange) {
+      setSaveStatus(hasSavedRef.current ? 'saved' : 'idle');
+      return;
+    }
+
+    setSaveStatus('saving');
+    debounceTimerRef.current = window.setTimeout(
+      () => flushPendingTextSaves(true),
+      TEXT_AUTOSAVE_DEBOUNCE_MS
+    );
+  }, [flushPendingTextSaves]);
+
+  const markImmediateSaved = useCallback(() => {
+    hasSavedRef.current = true;
+    if (!latestTextRef.current.title.trim()) {
+      setSaveStatus('invalid_title');
+    } else if (debounceTimerRef.current === null) {
+      setSaveStatus('saved');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleUnload = () => flushPendingTextSaves(false);
+    window.addEventListener('beforeunload', handleUnload);
+    window.addEventListener('pagehide', handleUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+      window.removeEventListener('pagehide', handleUnload);
+    };
+  }, [isOpen, flushPendingTextSaves]);
+
+  useEffect(() => {
+    return () => flushPendingTextSaves(false);
+  }, [flushPendingTextSaves]);
+
+  const handleClose = () => {
+    flushPendingTextSaves(false);
     onClose();
   };
 
+  const handleTitleChange = (nextTitle: string) => {
+    setTitle(nextTitle);
+    latestTextRef.current.title = nextTitle;
+    scheduleTextSave();
+  };
+
+  const handleDescriptionChange = (nextDescription: string, immediate = false) => {
+    setDescription(nextDescription);
+    latestTextRef.current.description = nextDescription;
+    if (immediate) {
+      flushPendingTextSaves(true);
+    } else {
+      scheduleTextSave();
+    }
+  };
+
+  const handleProjectChange = (nextProjectId: string) => {
+    if (nextProjectId === projectId) return;
+    setProjectId(nextProjectId);
+    updateTask(task.id, { projectId: nextProjectId });
+    markImmediateSaved();
+  };
+
+  const handleDeadlineChange = (nextDeadline: string) => {
+    setDeadline(nextDeadline);
+    const normalized = nextDeadline.trim() || undefined;
+    if (normalized !== lastSavedDeadlineRef.current) {
+      updateTask(task.id, { deadline: normalized });
+      lastSavedDeadlineRef.current = normalized;
+      markImmediateSaved();
+    }
+  };
+
+  const handlePriorityChange = (
+    nextPriority: TaskPriority,
+    nextUrgent: boolean,
+    nextImportant: boolean
+  ) => {
+    setPriority(nextPriority);
+    setIsUrgent(nextUrgent);
+    setIsImportant(nextImportant);
+    updateTask(task.id, {
+      priority: nextPriority,
+      isUrgent: nextUrgent,
+      isImportant: nextImportant,
+    });
+    markImmediateSaved();
+  };
+
+  const handleTagsChange = (nextTags: string[]) => {
+    setTags(nextTags);
+    updateTask(task.id, { tags: nextTags });
+    markImmediateSaved();
+  };
+
+  const handleLinksChange = (nextLinks: string[]) => {
+    setLinks(nextLinks);
+    updateTask(task.id, { links: nextLinks });
+    markImmediateSaved();
+  };
+
   const handleConfirmDelete = () => {
+    isDeletedRef.current = true;
+    if (debounceTimerRef.current !== null) {
+      window.clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
     deleteTask(task.id);
     onClose();
   };
 
   const handleArchive = () => {
+    flushPendingTextSaves(false);
     const previousArchived = Boolean(task.archived);
     const nextArchived = !previousArchived;
     updateTask(task.id, { archived: nextArchived });
@@ -164,7 +356,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
     <>
       <Modal
         isOpen={isOpen}
-        onClose={onClose}
+        onClose={handleClose}
         title={t('task_details')}
         style={combinedStyle}
         size={isExpanded ? '2xl' : 'lg'}
@@ -191,12 +383,16 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
             <Input
               label={t('task_title')}
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              onBlur={() => flushPendingTextSaves(true)}
               placeholder={t('task_title')}
+              error={!title.trim() ? t('title_required', 'Title is required') : undefined}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  handleSave();
+                  if (title.trim()) {
+                    handleClose();
+                  }
                 }
               }}
               autoFocus={!isExpanded}
@@ -205,10 +401,11 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
 
             <TaskDescriptionEditor
               value={description}
-              onChange={setDescription}
+              onChange={handleDescriptionChange}
+              onBlur={() => flushPendingTextSaves(true)}
               isExpanded={isExpanded}
               onToggleExpand={toggleExpanded}
-              onSave={handleSave}
+              onClose={handleClose}
               placeholder={t('task_description')}
             />
           </div>
@@ -224,7 +421,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
             <Select
               label={t('project')}
               value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
+              onChange={(e) => handleProjectChange(e.target.value)}
               options={projects.map((p) => ({
                 value: p.id,
                 label: p.name,
@@ -235,23 +432,19 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
               label={t('deadline') || 'Deadline'}
               type="date"
               value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
+              onChange={(e) => handleDeadlineChange(e.target.value)}
             />
 
             <TaskPrioritySelector
               priority={priority}
               isUrgent={isUrgent}
               isImportant={isImportant}
-              onChange={(p, u, i) => {
-                setPriority(p);
-                setIsUrgent(u);
-                setIsImportant(i);
-              }}
+              onChange={handlePriorityChange}
             />
 
-            <TaskTagsEditor tags={tags} onChangeTags={setTags} />
+            <TaskTagsEditor tags={tags} onChangeTags={handleTagsChange} />
 
-            <TaskLinksEditor links={links} onChangeLinks={setLinks} />
+            <TaskLinksEditor links={links} onChangeLinks={handleLinksChange} />
 
             {isExpanded && (
               <div className="rounded-xl p-3 bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/70 dark:border-white/8 text-2xs text-slate-500 dark:text-slate-400">
@@ -283,15 +476,43 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
             <div
               className={
                 isExpanded
-                  ? 'flex justify-end gap-2 mt-auto pt-3 border-t border-slate-200/70 dark:border-white/8'
-                  : 'sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-3 pb-1 border-t border-slate-200/70 dark:border-white/8 flex justify-end gap-2 shrink-0 z-10 mt-2'
+                  ? 'flex items-center justify-between gap-3 mt-auto pt-3 border-t border-slate-200/70 dark:border-white/8'
+                  : 'sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-3 pb-1 border-t border-slate-200/70 dark:border-white/8 flex items-center justify-between gap-3 shrink-0 z-10 mt-2'
               }
             >
-              <Button type="button" variant="secondary" onClick={onClose}>
-                {t('cancel')}
-              </Button>
-              <Button type="button" variant="primary" onClick={handleSave}>
-                {t('save')}
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex items-center gap-1.5 text-xs font-medium min-h-[20px]"
+              >
+                {saveStatus === 'saving' && (
+                  <span className="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                    <LoaderCircle size={13} className="motion-safe:animate-spin shrink-0" />
+                    <span>{t('saving', 'Saving...')}</span>
+                  </span>
+                )}
+                {saveStatus === 'saved' && (
+                  <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                    <Check size={13} className="shrink-0" />
+                    <span>{t('saved', 'Saved')}</span>
+                  </span>
+                )}
+                {saveStatus === 'invalid_title' && (
+                  <span className="inline-flex items-center gap-1.5 text-rose-600 dark:text-rose-400">
+                    <AlertCircle size={13} className="shrink-0" />
+                    <span>{t('title_required', 'Title is required')}</span>
+                  </span>
+                )}
+                {saveStatus === 'idle' && (
+                  <span className="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400/70 shrink-0" aria-hidden="true" />
+                    <span>{t('auto_save', 'Auto-save')}</span>
+                  </span>
+                )}
+              </div>
+
+              <Button type="button" variant="secondary" onClick={handleClose}>
+                {t('close', 'Close')}
               </Button>
             </div>
           </div>

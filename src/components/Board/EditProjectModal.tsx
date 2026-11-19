@@ -56,19 +56,21 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
   const [deleteTaskAction, setDeleteTaskAction] = useState<'move' | 'delete'>('move');
   const [deleteTransferTargetId, setDeleteTransferTargetId] = useState<string>('');
 
-  // Sync state when project changes or modal opens
-  const [prevProject, setPrevProject] = useState(project);
-  if (project !== prevProject) {
-    setPrevProject(project);
-    setName(project.name);
-    setColor(project.color);
-    setBgType(project.background?.type || 'theme');
-    setBgValue(project.background?.value || '');
-    setCustomId(project.customId || '');
-    setDescription(project.description || '');
-    setDeadline(project.deadline || '');
-    setTransferTargetId('');
-    setMoveSuccessMessage('');
+  // Reset drafts only when the modal transitions from closed to open
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      setName(project.name);
+      setColor(project.color);
+      setBgType(project.background?.type || 'theme');
+      setBgValue(project.background?.value || '');
+      setCustomId(project.customId || '');
+      setDescription(project.description || '');
+      setDeadline(project.deadline || '');
+      setTransferTargetId('');
+      setMoveSuccessMessage('');
+    }
   }
 
   const effectiveDeleteTargetId = deleteTransferTargetId || (otherProjects[0]?.id ?? '');

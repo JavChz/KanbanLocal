@@ -50,12 +50,12 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   };
 
   const sizeClasses = size === 'sm'
-    ? 'px-1.5 py-0.5 text-[9px]'
+    ? 'px-1.5 py-0.5 text-4xs'
     : 'px-2 py-0.5 text-3xs';
 
   return (
     <span
-      className={`inline-flex items-center rounded-full font-bold uppercase tracking-wider ${sizeClasses} ${getStatusBadgeClass()} ${className}`}
+      className={`inline-flex items-center rounded-full font-semibold uppercase tracking-wider tabular-nums ${sizeClasses} ${getStatusBadgeClass()} ${className}`}
     >
       {getStatusLabel()}
     </span>

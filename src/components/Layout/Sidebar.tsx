@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useKanbanStore } from '../../store/useKanbanStore';
 import type { Project } from '../../types/kanban';
 import { Home, Globe, Settings, Plus, Circle, ChevronLeft, GripVertical, Layers, ArrowRight } from 'lucide-react';
 import { AppLogo } from '../ui/AppLogo';
 import { useTranslation } from 'react-i18next';
-import { getColorStyles } from '../../utils/colors';
+import { getColorStyles, resolveProjectColorVar } from '../../utils/colors';
 import { useDragStore } from '../../store/useDragStore';
 import {
   DndContext,
@@ -27,12 +27,14 @@ import { CSS } from '@dnd-kit/utilities';
 
 interface SortableSidebarProjectProps {
   project: Project;
+  taskCount: number;
   isActive: boolean;
   onSelect: () => void;
 }
 
 const SortableSidebarProject: React.FC<SortableSidebarProjectProps> = ({
   project,
+  taskCount,
   isActive,
   onSelect,
 }) => {
@@ -54,7 +56,7 @@ const SortableSidebarProject: React.FC<SortableSidebarProjectProps> = ({
   const colorStyles = getColorStyles(project.color);
 
   const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging ? 0.35 : 1,
     zIndex: isDragging ? 50 : undefined,
@@ -89,30 +91,35 @@ const SortableSidebarProject: React.FC<SortableSidebarProjectProps> = ({
         }
         onSelect();
       }}
-      className={`group flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-all duration-150 cursor-grab active:cursor-grabbing select-none ${
+      className={`group flex items-center justify-between px-2.5 py-2 rounded-lg text-[13px] transition-colors duration-150 cursor-grab active:cursor-grabbing select-none ${
         isHovered
-          ? 'ring-2 ring-blue-500 bg-blue-500/20 text-blue-700 dark:text-blue-300 scale-[1.03] shadow-md font-semibold'
+          ? 'ring-1 ring-blue-500 bg-blue-500/15 text-blue-700 dark:text-blue-300 font-semibold shadow-xs'
           : isDropTarget
-          ? 'border border-dashed border-blue-400/40 dark:border-blue-500/40 bg-blue-500/5 hover:bg-blue-500/15 text-slate-700 dark:text-slate-300'
+          ? 'border border-dashed border-slate-400/50 dark:border-slate-600/60 bg-slate-500/[0.04] hover:bg-blue-500/10 text-slate-700 dark:text-slate-300'
           : isActive
-          ? 'bg-blue-600/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium'
-          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/55 dark:hover:bg-slate-800/40'
+          ? 'bg-slate-900/[0.07] dark:bg-white/[0.09] text-slate-950 dark:text-white font-medium shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]'
+          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.04]'
       } ${isDragging ? 'shadow-sm ring-1 ring-blue-500/30' : ''}`}
     >
-      <div className="flex items-center gap-3 min-w-0 flex-1">
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <Circle size={8} className={`fill-current ${colorStyles.text} shrink-0`} />
         <span className="truncate flex-1">{project.name}</span>
       </div>
       {isHovered ? (
-        <span className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-300 bg-blue-500/25 px-1.5 py-0.5 rounded-md shrink-0 ml-1 animate-pulse">
-          <ArrowRight size={11} />
+        <span className="flex items-center gap-1 text-2xs font-semibold text-blue-600 dark:text-blue-300 bg-blue-500/15 px-1.5 py-0.5 rounded-md shrink-0 ml-1">
+          <ArrowRight size={10} />
           {t('drop_to_move', 'Move')}
         </span>
       ) : (
-        <GripVertical
-          size={13}
-          className="text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ml-1"
-        />
+        <div className="relative flex items-center justify-end w-6 shrink-0 ml-1">
+          <span className="text-2xs font-mono tabular-nums text-slate-400 dark:text-slate-500 group-hover:opacity-0 transition-opacity duration-150">
+            {taskCount}
+          </span>
+          <GripVertical
+            size={13}
+            className="absolute right-0 text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-75 transition-opacity duration-150"
+          />
+        </div>
       )}
     </div>
   );
@@ -133,7 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCollapseSidebar,
   onOpenSettings,
 }) => {
-  const { projects, reorderProjects } = useKanbanStore();
+  const { projects, tasks, reorderProjects } = useKanbanStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -144,11 +151,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ? projects.find((p) => p.id === activeProjectId)
     : null;
 
-  const projectAccentColor = activeProject
-    ? activeProject.color.startsWith('#')
-      ? activeProject.color
-      : `var(--color-${activeProject.color})`
-    : undefined;
+  const projectAccentColor = resolveProjectColorVar(activeProject?.color);
+
+  const taskCountsByProject = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const task of tasks) {
+      if (!task.archived) {
+        counts.set(task.projectId, (counts.get(task.projectId) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [tasks]);
 
   const [activeSidebarId, setActiveSidebarId] = useState<string | null>(null);
   const activeSidebarProject = activeSidebarId
@@ -179,9 +192,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const navItems = [
-    { to: '/', icon: <Home size={18} />, label: t('home'), end: true },
-    { to: '/global', icon: <Globe size={18} />, label: t('global_view') },
-    { to: '/matrix', icon: <Layers size={18} />, label: t('eisenhower_matrix', 'Eisenhower Matrix') },
+    { to: '/', icon: <Home size={16} />, label: t('home'), end: true },
+    { to: '/global', icon: <Globe size={16} />, label: t('global_view') },
+    { to: '/matrix', icon: <Layers size={16} />, label: t('eisenhower_matrix', 'Eisenhower Matrix') },
   ];
 
   const handleCreateProjectClick = () => {
@@ -191,7 +204,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`fixed top-0 bottom-0 left-0 w-64 glass-panel border-r border-slate-200/50 dark:border-slate-800/30 z-50 transform transition-all duration-300 md:sticky md:top-0 md:h-screen flex flex-col overflow-hidden ${
+      className={`fixed top-0 bottom-0 left-0 w-64 glass-panel border-r border-slate-200/70 dark:border-white/8 z-[var(--z-drawer)] transform transition-[width,transform,opacity] duration-200 ease-[var(--ease-out-expo)] md:sticky md:top-0 md:h-screen flex flex-col overflow-hidden ${
         isSidebarOpen
           ? 'translate-x-0 w-64'
           : isSidebarCollapsed
@@ -199,133 +212,149 @@ export const Sidebar: React.FC<SidebarProps> = ({
           : '-translate-x-full md:translate-x-0 md:w-64 md:opacity-100'
       }`}
     >
-      {/* Sidebar Header */}
-      <div className="p-5 border-b border-slate-200/50 dark:border-slate-800/30 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <AppLogo
-            size={24}
-            accentColor={projectAccentColor}
-            className="shadow-sm flex-shrink-0 transition-all duration-300"
-            style={
-              projectAccentColor
-                ? {
-                    boxShadow: `0 2px 8px color-mix(in srgb, ${projectAccentColor} 30%, transparent)`,
-                  }
-                : undefined
-            }
-          />
-          <span className="font-bold text-slate-800 dark:text-slate-50 text-lg tracking-wide">
-            {t('app_title')}
-          </span>
-        </div>
-        <button
-          onClick={onCollapseSidebar}
-          className="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/55 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
-          aria-label="Collapse Sidebar"
-          title="Collapse Sidebar"
-        >
-          <ChevronLeft size={18} />
-        </button>
-      </div>
-
-      {/* Sidebar Navigation */}
-      <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
-        {/* Main Links */}
-        <div className="space-y-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={onCloseSidebar}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-sm dark:bg-blue-500'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/55 dark:hover:bg-slate-800/40'
-                }`
+      {/* Fixed-width inner wrapper prevents text wrapping/squishing during collapse */}
+      <div className="w-64 min-w-[16rem] h-full flex flex-col">
+        {/* Sidebar Header */}
+        <div className="px-4 py-4 border-b border-slate-200/70 dark:border-white/8 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <AppLogo
+              size={22}
+              accentColor={projectAccentColor}
+              className="shadow-xs flex-shrink-0 transition-all duration-200"
+              style={
+                projectAccentColor
+                  ? {
+                      boxShadow: `0 2px 8px color-mix(in srgb, ${projectAccentColor} 28%, transparent)`,
+                    }
+                  : undefined
               }
-            >
-              {item.icon}
-              {item.label}
-            </NavLink>
-          ))}
+            />
+            <span className="font-semibold text-slate-900 dark:text-slate-50 text-[15px] tracking-tight">
+              {t('app_title')}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onCollapseSidebar}
+            className="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
+            aria-label="Collapse Sidebar"
+            title="Collapse Sidebar"
+          >
+            <ChevronLeft size={17} />
+          </button>
         </div>
 
-        {/* Projects Submenu */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between px-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {t('projects')}
-            </span>
-            <button
-              onClick={handleCreateProjectClick}
-              className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
-              title={t('add_project')}
-            >
-              <Plus size={14} />
-            </button>
+        {/* Sidebar Navigation */}
+        <nav className="flex-1 p-3 space-y-5 overflow-y-auto">
+          {/* Main Links */}
+          <div className="space-y-0.5">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={onCloseSidebar}
+                className={({ isActive }) =>
+                  `flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-colors duration-150 ${
+                    isActive
+                      ? 'bg-slate-900/[0.07] dark:bg-white/[0.09] text-slate-950 dark:text-white font-semibold shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]'
+                      : 'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.04]'
+                  }`
+                }
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
           </div>
 
-          <DndContext
-            sensors={sidebarSensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleSidebarDragStart}
-            onDragEnd={handleSidebarDragEnd}
-          >
-            <SortableContext
-              items={projects.map((p) => p.id)}
-              strategy={verticalListSortingStrategy}
+          {/* Projects Submenu */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-2">
+              <span className="text-2xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                {t('projects')}
+              </span>
+              <button
+                type="button"
+                onClick={handleCreateProjectClick}
+                className="p-1 rounded-md text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                title={t('add_project')}
+                aria-label={t('add_project')}
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+
+            <DndContext
+              sensors={sidebarSensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleSidebarDragStart}
+              onDragEnd={handleSidebarDragEnd}
             >
-              <div className="space-y-0.5 max-h-48 overflow-y-auto pr-1">
-                {projects.length === 0 ? (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 px-2 italic">
-                    {t('no_projects')}
-                  </p>
-                ) : (
-                  projects.map((proj) => (
-                    <SortableSidebarProject
-                      key={proj.id}
-                      project={proj}
-                      isActive={activeProjectId === proj.id}
-                      onSelect={() => {
-                        onCloseSidebar();
-                        navigate(`/project/${proj.id}`);
-                      }}
-                    />
-                  ))
-                )}
-              </div>
-            </SortableContext>
-
-            <DragOverlay>
-              {activeSidebarProject ? (
-                <div className="drag-overlay-pill flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-sm shadow-2xl ring-1 ring-blue-500/40 scale-105 select-none pointer-events-none w-52">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <Circle
-                      size={8}
-                      className={`fill-current ${getColorStyles(activeSidebarProject.color).text} shrink-0`}
-                    />
-                    <span className="truncate flex-1 font-semibold">{activeSidebarProject.name}</span>
-                  </div>
-                  <GripVertical size={13} className="text-slate-400 shrink-0" />
+              <SortableContext
+                items={projects.map((p) => p.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-0.5">
+                  {projects.length === 0 ? (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 px-2 py-1 italic">
+                      {t('no_projects')}
+                    </p>
+                  ) : (
+                    projects.map((proj) => (
+                      <SortableSidebarProject
+                        key={proj.id}
+                        project={proj}
+                        taskCount={taskCountsByProject.get(proj.id) ?? 0}
+                        isActive={activeProjectId === proj.id}
+                        onSelect={() => {
+                          onCloseSidebar();
+                          navigate(`/project/${proj.id}`);
+                        }}
+                      />
+                    ))
+                  )}
                 </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        </div>
-      </nav>
+              </SortableContext>
 
-      {/* Sidebar Footer */}
-      <div className="p-4 border-t border-slate-200/50 dark:border-slate-800/30">
-        <button
-          onClick={onOpenSettings}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/30 text-slate-700 dark:text-slate-200 hover:bg-slate-200/55 dark:hover:bg-slate-800/40 text-xs font-semibold shadow-xs hover:shadow-sm transition-all duration-200 active:scale-97 cursor-pointer"
-          title={t('settings')}
-        >
-          <Settings size={14} className="text-slate-500 dark:text-slate-400" />
-          <span>{t('settings')}</span>
-        </button>
+              <DragOverlay
+                dropAnimation={{
+                  duration: 180,
+                  easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              >
+                {activeSidebarProject ? (
+                  <div className="drag-overlay-pill flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-[13px] shadow-xl ring-1 ring-blue-500/35 select-none pointer-events-none w-56">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <Circle
+                        size={8}
+                        className={`fill-current ${getColorStyles(activeSidebarProject.color).text} shrink-0`}
+                      />
+                      <span className="truncate flex-1 font-medium">{activeSidebarProject.name}</span>
+                    </div>
+                    <GripVertical size={13} className="text-slate-400 shrink-0" />
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </div>
+        </nav>
+
+        {/* Sidebar Footer */}
+        <div className="p-3 border-t border-slate-200/70 dark:border-white/8">
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.05] text-xs font-medium transition-colors duration-150 active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
+            title={t('settings')}
+          >
+            <Settings size={15} className="text-slate-500 dark:text-slate-400 shrink-0" />
+            <span>{t('settings')}</span>
+            <kbd className="ml-auto hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-mono text-slate-400 dark:text-slate-500 bg-slate-200/60 dark:bg-white/5 border border-slate-300/50 dark:border-white/10">
+              Ctrl+Alt+S
+            </kbd>
+          </button>
+        </div>
       </div>
     </aside>
   );

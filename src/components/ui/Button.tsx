@@ -13,8 +13,9 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95';
-  
+  const baseStyles =
+    'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--project-color,var(--color-blue-500))]/50 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98] select-none';
+
   const sizeStyles = {
     sm: 'px-3 py-1.5 text-xs',
     md: 'px-4 py-2 text-sm',
@@ -22,10 +23,14 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const variantStyles = {
-    primary: 'bg-[var(--project-color,var(--color-blue-600))] hover:bg-[color-mix(in_srgb,var(--project-color,var(--color-blue-600))_90%,black)] text-white shadow-sm hover:shadow-md dark:bg-[var(--project-color,var(--color-blue-500))] dark:hover:bg-[color-mix(in_srgb,var(--project-color,var(--color-blue-500))_85%,black)]',
-    secondary: 'glass-panel text-slate-800 dark:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50',
-    danger: 'bg-red-600 hover:bg-red-700 text-white shadow-sm hover:shadow-md dark:bg-red-500 dark:hover:bg-red-600',
-    ghost: 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/55 dark:hover:bg-slate-800/40',
+    primary:
+      'bg-[var(--project-color,var(--color-blue-600))] hover:bg-[color-mix(in_srgb,var(--project-color,var(--color-blue-600))_88%,black)] text-white shadow-xs hover:shadow-sm dark:bg-[var(--project-color,var(--color-blue-500))] dark:hover:bg-[color-mix(in_srgb,var(--project-color,var(--color-blue-500))_85%,black)]',
+    secondary:
+      'glass-panel text-slate-700 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:border-slate-300/80 dark:hover:border-white/15',
+    danger:
+      'bg-red-600 hover:bg-red-700 text-white shadow-xs hover:shadow-sm dark:bg-red-500 dark:hover:bg-red-600',
+    ghost:
+      'text-slate-600 dark:text-slate-300 hover:bg-slate-200/55 dark:hover:bg-slate-800/55 hover:text-slate-900 dark:hover:text-slate-100',
   };
 
   return (

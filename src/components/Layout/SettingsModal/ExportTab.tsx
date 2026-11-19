@@ -71,7 +71,7 @@ export const ExportTab: React.FC<ExportTabProps> = ({ onFeedback }) => {
             >
               {t('select_all')}
             </button>
-            <span className="text-slate-300 dark:text-slate-850">|</span>
+            <span className="text-slate-300 dark:text-slate-700">|</span>
             <button
               type="button"
               onClick={() => setSelectedExportBoardIds([])}
@@ -94,10 +94,10 @@ export const ExportTab: React.FC<ExportTabProps> = ({ onFeedback }) => {
               return (
                 <label
                   key={proj.id}
-                  className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                  className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors ${
                     isSelected
-                      ? 'bg-blue-600/10 border-blue-500/40 text-slate-850 dark:text-slate-100'
-                      : 'border-slate-200/50 dark:border-slate-800/30 hover:bg-slate-200/25 dark:hover:bg-slate-900/10 text-slate-500 dark:text-slate-400'
+                      ? 'bg-slate-900/[0.05] dark:bg-white/[0.06] border-blue-500/40 text-slate-900 dark:text-slate-100'
+                      : 'border-slate-200/70 dark:border-white/8 hover:bg-slate-100/70 dark:hover:bg-slate-800/40 text-slate-600 dark:text-slate-400'
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate">

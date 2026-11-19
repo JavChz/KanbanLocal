@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search } from 'lucide-react';
-import { Select } from '../ui/Select';
+import { Search, X } from 'lucide-react';
 import type { Project } from '../../types/kanban';
 
 interface GlobalFilterToolbarProps {
@@ -12,6 +11,7 @@ interface GlobalFilterToolbarProps {
   statusFilter: string;
   onStatusFilterChange: (value: string) => void;
   projects: Project[];
+  onClearFilters?: () => void;
 }
 
 export const GlobalFilterToolbar: React.FC<GlobalFilterToolbarProps> = ({
@@ -22,6 +22,7 @@ export const GlobalFilterToolbar: React.FC<GlobalFilterToolbarProps> = ({
   statusFilter,
   onStatusFilterChange,
   projects,
+  onClearFilters,
 }) => {
   const { t } = useTranslation();
 
@@ -38,44 +39,73 @@ export const GlobalFilterToolbar: React.FC<GlobalFilterToolbarProps> = ({
     ...projects.map((p) => ({ value: p.id, label: p.name })),
   ];
 
+  const hasActiveFilters = Boolean(search) || projectFilter !== 'ALL' || statusFilter !== 'ALL';
+
   return (
-    <div className="glass-panel p-4.5 rounded-2xl flex flex-col md:flex-row gap-4 items-end">
+    <div className="glass-panel p-3 rounded-xl flex flex-col md:flex-row gap-2.5 items-stretch md:items-center">
       {/* Search input */}
-      <div className="flex-1 w-full relative flex flex-col gap-1.5">
-        <label className="text-xs font-semibold text-slate-700 dark:text-slate-350 uppercase tracking-wider flex items-center gap-1">
-          <Search size={12} />
-          {t('search')}
-        </label>
-        <div className="relative">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={t('search_placeholder')}
-            className="glass-input w-full pl-9 pr-4 py-2 rounded-lg text-sm"
-          />
-          <Search size={14} className="absolute left-3.5 top-3 text-slate-500 dark:text-slate-400" />
-        </div>
+      <div className="flex-1 relative">
+        <Search
+          size={14}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+        />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder={t('search_placeholder')}
+          aria-label={t('search')}
+          className="glass-input w-full h-9 pl-9 pr-8 rounded-lg text-xs sm:text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => onSearchChange('')}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer p-0.5 rounded"
+            aria-label={t('clear_filters')}
+          >
+            <X size={13} />
+          </button>
+        )}
       </div>
 
-      {/* Project Selector */}
-      <div className="w-full md:w-64">
-        <Select
-          label={t('project')}
-          options={projectOptions}
+      {/* Project & Status Selectors */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+        <select
+          aria-label={t('project')}
           value={projectFilter}
           onChange={(e) => onProjectFilterChange(e.target.value)}
-        />
-      </div>
+          className="glass-input h-9 px-3 rounded-lg text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer sm:w-48"
+        >
+          {projectOptions.map((opt) => (
+            <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-900">
+              {opt.label}
+            </option>
+          ))}
+        </select>
 
-      {/* Status Selector */}
-      <div className="w-full md:w-52">
-        <Select
-          label={t('status')}
-          options={statusOptions}
+        <select
+          aria-label={t('status')}
           value={statusFilter}
           onChange={(e) => onStatusFilterChange(e.target.value)}
-        />
+          className="glass-input h-9 px-3 rounded-lg text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer sm:w-44"
+        >
+          {statusOptions.map((opt) => (
+            <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-900">
+              {opt.label}
+            </option>
+          ))}
+        </select>
+
+        {hasActiveFilters && onClearFilters && (
+          <button
+            type="button"
+            onClick={onClearFilters}
+            className="h-9 px-3 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0"
+          >
+            {t('clear_filters')}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -6,9 +6,20 @@ export const useKeyboardShortcuts = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check for Ctrl/Cmd modifier (ignoring other modifiers like Alt or Shift)
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      // Match documented Ctrl/Cmd + Alt + key combinations without hijacking browser defaults
       const isMod = e.ctrlKey || e.metaKey;
-      if (isMod && !e.altKey && !e.shiftKey) {
+      if (isMod && e.altKey && !e.shiftKey) {
         switch (e.key.toLowerCase()) {
           case 'h':
             e.preventDefault();
@@ -24,15 +35,13 @@ export const useKeyboardShortcuts = () => {
             break;
           case 's':
             e.preventDefault();
-            navigate('/settings');
+            window.dispatchEvent(new CustomEvent('trigger-open-settings'));
             break;
           case 'n':
             e.preventDefault();
             if (window.location.href.includes('/project/')) {
-              // Dispatch custom event to trigger task creation form in the Todo stage
               window.dispatchEvent(new CustomEvent('trigger-add-todo'));
             } else {
-              // Trigger project creation query param on Dashboard
               navigate('/?action=new-project');
             }
             break;

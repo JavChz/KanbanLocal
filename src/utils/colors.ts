@@ -339,3 +339,11 @@ export const getColorStyles = (colorKey: string): ColorDefinition => {
     }
   );
 };
+
+/**
+ * Resolves a project color token or hex string into a valid CSS color value.
+ */
+export const resolveProjectColorVar = (color?: string): string | undefined => {
+  if (!color) return undefined;
+  return color.startsWith('#') ? color : `var(--color-${color})`;
+};

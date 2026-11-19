@@ -15,7 +15,7 @@ export const GlobalView: React.FC = () => {
 
   const [viewMode, setViewMode] = useState<'list' | 'projects'>(() => {
     const saved = localStorage.getItem('global_view_mode');
-    return (saved === 'projects' || saved === 'list') ? saved : 'list';
+    return saved === 'projects' || saved === 'list' ? saved : 'list';
   });
 
   const handleSetViewMode = (mode: 'list' | 'projects') => {
@@ -27,10 +27,11 @@ export const GlobalView: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [projectFilter, setProjectFilter] = useState('ALL');
 
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
-  // Filter tasks based on search, status, and project filters
+  const selectedTask = selectedTaskId ? tasks.find((t) => t.id === selectedTaskId) ?? null : null;
+
   const filteredTasks = tasks.filter((task) => {
     const matchesSearch =
       task.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -47,7 +48,7 @@ export const GlobalView: React.FC = () => {
   });
 
   const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
+    setSelectedTaskId(task.id);
     setIsTaskModalOpen(true);
   };
 
@@ -55,20 +56,53 @@ export const GlobalView: React.FC = () => {
     navigate(`/project/${projectId}?task=${taskId}`);
   };
 
-  const displayedProjects = projectFilter === 'ALL'
-    ? projects
-    : projects.filter((p) => p.id === projectFilter);
+  const displayedProjects =
+    projectFilter === 'ALL' ? projects : projects.filter((p) => p.id === projectFilter);
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setProjectFilter('ALL');
+    setStatusFilter('ALL');
+  };
 
   return (
-    <div className="flex flex-col gap-6 h-full animate-fade-in text-left">
-      {/* Header */}
-      <div className="flex flex-col gap-1.5">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-slate-50 md:text-4xl">
-          {t('global_view')}
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {t('global_view_desc')}
-        </p>
+    <div className="flex flex-col gap-5 h-full animate-fade-in text-left">
+      {/* Compact Workspace Header with Docked View Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+            {t('global_view')}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('global_view_desc')}
+          </p>
+        </div>
+
+        {/* View Mode Toggle */}
+        <div className="flex items-center self-start sm:self-center bg-slate-200/70 dark:bg-slate-900/70 p-1 rounded-xl border border-slate-200/80 dark:border-white/8 shrink-0">
+          <button
+            type="button"
+            onClick={() => handleSetViewMode('list')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150 ${
+              viewMode === 'list'
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+            }`}
+          >
+            {t('list_view')}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSetViewMode('projects')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150 ${
+              viewMode === 'projects'
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+            }`}
+          >
+            {t('projects_view')}
+          </button>
+        </div>
       </div>
 
       {/* Filter Toolbar */}
@@ -80,53 +114,26 @@ export const GlobalView: React.FC = () => {
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
         projects={projects}
+        onClearFilters={handleClearFilters}
       />
 
-      {/* View Switcher and Results */}
-      <div className="flex flex-col gap-4">
-        {/* View Mode Toggle */}
-        <div className="flex justify-end">
-          <div className="flex items-center bg-slate-100/60 dark:bg-slate-900/40 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800/40 shadow-xs">
-            <button
-              onClick={() => handleSetViewMode('list')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all duration-200 ${
-                viewMode === 'list'
-                  ? 'bg-white dark:bg-slate-800 text-blue-650 dark:text-blue-450 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-              }`}
-            >
-              {t('list_view')}
-            </button>
-            <button
-              onClick={() => handleSetViewMode('projects')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all duration-200 ${
-                viewMode === 'projects'
-                  ? 'bg-white dark:bg-slate-800 text-blue-650 dark:text-blue-450 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-              }`}
-            >
-              {t('projects_view')}
-            </button>
-          </div>
-        </div>
-
-        {viewMode === 'list' ? (
-          <GlobalTaskTable
-            tasks={filteredTasks}
-            projects={projects}
-            onTaskClick={handleTaskClick}
-            onOpenInProject={handleOpenInProject}
-          />
-        ) : (
-          <GlobalProjectColumns
-            projects={displayedProjects}
-            filteredTasks={filteredTasks}
-            onTaskClick={handleTaskClick}
-            onOpenProject={(projId) => navigate(`/project/${projId}`)}
-            onOpenInProject={handleOpenInProject}
-          />
-        )}
-      </div>
+      {/* Results */}
+      {viewMode === 'list' ? (
+        <GlobalTaskTable
+          tasks={filteredTasks}
+          projects={projects}
+          onTaskClick={handleTaskClick}
+          onOpenInProject={handleOpenInProject}
+        />
+      ) : (
+        <GlobalProjectColumns
+          projects={displayedProjects}
+          filteredTasks={filteredTasks}
+          onTaskClick={handleTaskClick}
+          onOpenProject={(projId) => navigate(`/project/${projId}`)}
+          onOpenInProject={handleOpenInProject}
+        />
+      )}
 
       {/* Task Details Modal */}
       <TaskModal
@@ -134,7 +141,7 @@ export const GlobalView: React.FC = () => {
         isOpen={isTaskModalOpen}
         onClose={() => {
           setIsTaskModalOpen(false);
-          setSelectedTask(null);
+          setSelectedTaskId(null);
         }}
       />
     </div>

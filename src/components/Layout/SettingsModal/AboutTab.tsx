@@ -54,7 +54,7 @@ export const AboutTab: React.FC = () => {
         </div>
       </div>
 
-      <div className="font-mono text-3xs leading-relaxed bg-slate-100 dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200/50 dark:border-slate-800/40 text-slate-500 dark:text-slate-400 overflow-x-auto max-h-[140px]">
+      <div className="font-mono text-2xs leading-relaxed bg-slate-100/80 dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200/70 dark:border-white/8 text-slate-600 dark:text-slate-400 overflow-x-auto max-h-[140px]">
         <p className="mb-1 font-bold">MIT License</p>
         <p className="mb-2">Copyright (c) 2026 JavChz</p>
         <p>

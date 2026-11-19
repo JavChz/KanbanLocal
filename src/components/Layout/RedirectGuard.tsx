@@ -1,27 +1,31 @@
-import React, { useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useKanbanStore } from '../../store/useKanbanStore';
+
+let hasHandledStartupRedirect = false;
 
 interface RedirectGuardProps {
   children: React.ReactNode;
 }
 
 export const RedirectGuard: React.FC<RedirectGuardProps> = ({ children }) => {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { lastOpenedProject, projects } = useKanbanStore();
-  const hasChecked = useRef(false);
+  const lastOpenedProject = useKanbanStore((s) => s.lastOpenedProject);
+  const projects = useKanbanStore((s) => s.projects);
+
+  const shouldRedirectOnStartup =
+    !hasHandledStartupRedirect &&
+    location.pathname === '/' &&
+    Boolean(lastOpenedProject) &&
+    projects.some((p) => p.id === lastOpenedProject);
 
   useEffect(() => {
-    if (!hasChecked.current) {
-      hasChecked.current = true;
-      if (location.pathname === '/' && lastOpenedProject && projects.some((p) => p.id === lastOpenedProject)) {
-        // Replace history entry on startup to prevent back-button redirect loops
-        navigate(`/project/${lastOpenedProject}`, { replace: true });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run check once on initial application mount
+    hasHandledStartupRedirect = true;
+  }, []);
+
+  if (shouldRedirectOnStartup && lastOpenedProject) {
+    return <Navigate to={`/project/${lastOpenedProject}`} replace />;
+  }
 
   return <>{children}</>;
 };

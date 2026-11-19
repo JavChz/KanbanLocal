@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useKanbanStore } from '../../store/useKanbanStore';
 import { AppLogo } from '../ui/AppLogo';
+import { resolveProjectColorVar } from '../../utils/colors';
 
 interface MobileHeaderProps {
   isSidebarOpen: boolean;
@@ -20,14 +21,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
   const match = location.pathname.match(/^\/project\/([^/]+)/);
   const activeProject = match ? projects.find((p) => p.id === match[1]) : null;
-  const projectAccentColor = activeProject
-    ? activeProject.color.startsWith('#')
-      ? activeProject.color
-      : `var(--color-${activeProject.color})`
-    : undefined;
+  const projectAccentColor = resolveProjectColorVar(activeProject?.color);
 
   return (
-    <header className="md:hidden flex items-center justify-between px-4 py-3 glass-panel border-b border-slate-200/50 dark:border-slate-800/30 sticky top-0 z-40">
+    <header className="md:hidden flex items-center justify-between px-4 py-3 glass-panel border-b border-slate-200/70 dark:border-white/8 sticky top-0 z-[var(--z-sticky)]">
       <Link to="/" className="flex items-center gap-2.5 font-bold text-slate-800 dark:text-slate-100">
         <AppLogo
           size={22}

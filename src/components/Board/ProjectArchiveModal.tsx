@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { useKanbanStore } from '../../store/useKanbanStore';
 import { toast } from '../../store/useToastStore';
+import { resolveProjectColorVar } from '../../utils/colors';
+import { stripMarkdown } from '../../utils/markdown';
 import type { Task, TaskStatus, TaskPriority } from '../../types/kanban';
 
 interface ProjectArchiveModalProps {
@@ -52,7 +54,7 @@ export const ProjectArchiveModal: React.FC<ProjectArchiveModalProps> = ({
   const { tasks, projects, updateTask, deleteTask } = useKanbanStore();
 
   const project = projects.find((p) => p.id === projectId);
-  const projectColorVar = project ? `var(--color-${project.color})` : undefined;
+  const projectColorVar = resolveProjectColorVar(project?.color);
 
   // Filter & Sort States
   const [search, setSearch] = useState('');
@@ -197,12 +199,12 @@ export const ProjectArchiveModal: React.FC<ProjectArchiveModalProps> = ({
       >
         <div className="flex flex-col gap-4 text-left">
           {/* Header Stats & Bulk Action Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-100/60 dark:bg-slate-900/40">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200/70 dark:border-white/8 bg-slate-100/70 dark:bg-slate-900/40">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                <Archive size={14} className="text-blue-550 dark:text-blue-400" />
+                <Archive size={14} className="text-blue-600 dark:text-blue-400" />
                 <span>
-                  {t('total_archived')}: <strong className="text-slate-900 dark:text-slate-100 font-bold">{allArchivedTasks.length}</strong>
+                  {t('total_archived')}: <strong className="text-slate-900 dark:text-slate-100 font-bold tabular-nums">{allArchivedTasks.length}</strong>
                 </span>
               </div>
               {isFiltering && (
@@ -386,7 +388,7 @@ export const ProjectArchiveModal: React.FC<ProjectArchiveModalProps> = ({
                 {displayedTasks.map((task) => (
                   <div
                     key={task.id}
-                    className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-800/50 bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100/70 dark:hover:bg-slate-850/50 transition-all hover:border-slate-300 dark:hover:border-slate-700 shadow-xs"
+                    className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200/70 dark:border-white/8 bg-slate-50/80 dark:bg-slate-900/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/50 transition-colors hover:border-slate-300 dark:hover:border-white/15 shadow-xs"
                   >
                     {/* Left details click area */}
                     <div
@@ -410,14 +412,14 @@ export const ProjectArchiveModal: React.FC<ProjectArchiveModalProps> = ({
                       </div>
 
                       {/* Description snippet */}
-                      {task.description && (
+                      {task.description && stripMarkdown(task.description) && (
                         <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1 mb-1.5">
-                          {task.description}
+                          {stripMarkdown(task.description)}
                         </p>
                       )}
 
                       {/* Metadata Line: Tags, Deadline, Links, Timestamps */}
-                      <div className="flex items-center gap-3 flex-wrap text-2xs text-slate-450 dark:text-slate-400">
+                      <div className="flex items-center gap-3 flex-wrap text-2xs text-slate-500 dark:text-slate-400">
                         {/* Tags */}
                         {task.tags && task.tags.length > 0 && (
                           <div className="flex items-center gap-1">
@@ -426,7 +428,7 @@ export const ProjectArchiveModal: React.FC<ProjectArchiveModalProps> = ({
                               {task.tags.map((tag) => (
                                 <span
                                   key={tag}
-                                  className="px-1.5 py-0.2 rounded bg-slate-200/60 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300"
+                                  className="px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300"
                                 >
                                   #{tag}
                                 </span>

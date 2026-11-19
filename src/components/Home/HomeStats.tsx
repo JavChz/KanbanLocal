@@ -1,6 +1,5 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ListTodo, Clock, CheckCircle } from 'lucide-react';
 import type { Task } from '../../types/kanban';
 
 interface HomeStatsProps {
@@ -18,80 +17,58 @@ export const HomeStats: React.FC<HomeStatsProps> = ({ tasks }) => {
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {/* Stat item 1: Backlog */}
-      <div className="glass-panel p-5 rounded-2xl flex items-center gap-4 text-left transition-all hover:shadow-md duration-300">
-        <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
-          <ListTodo size={20} />
-        </div>
-        <div>
-          <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">
+    <div className="glass-panel rounded-xl px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5">
+        <div className="flex items-center gap-2.5">
+          <span className="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 shrink-0" />
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
             {t('backlog') || 'Backlog'}
           </span>
-          <span className="text-xl font-bold font-mono text-slate-800 dark:text-slate-100">
+          <span className="text-sm font-semibold font-mono tabular-nums text-slate-900 dark:text-slate-100">
             {backlogTasks}
           </span>
         </div>
-      </div>
 
-      {/* Stat item 2: In Progress */}
-      <div className="glass-panel p-5 rounded-2xl flex items-center gap-4 text-left transition-all hover:shadow-md duration-300">
-        <div className="p-3 rounded-xl bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
-          <Clock size={20} />
-        </div>
-        <div>
-          <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">
+        <span className="hidden sm:block w-px h-4 bg-slate-200 dark:bg-white/10" aria-hidden="true" />
+
+        <div className="flex items-center gap-2.5">
+          <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
             {t('in_progress')}
           </span>
-          <span className="text-xl font-bold font-mono text-slate-800 dark:text-slate-100">
+          <span className="text-sm font-semibold font-mono tabular-nums text-slate-900 dark:text-slate-100">
             {inProgressTasks}
           </span>
         </div>
-      </div>
 
-      {/* Stat item 3: Completed tasks with circular progress ring */}
-      <div className="glass-panel p-5 rounded-2xl flex items-center gap-4 text-left justify-between transition-all hover:shadow-md duration-300">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-green-100 dark:bg-green-950/40 text-green-600 dark:text-green-400">
-            <CheckCircle size={20} />
-          </div>
-          <div>
-            <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium uppercase tracking-wider">
-              {t('completed') || 'Completed'}
-            </span>
-            <span className="text-xl font-bold font-mono text-slate-800 dark:text-slate-100">
-              {completedTasks} <span className="text-2xs text-slate-500">/ {totalTasks}</span>
-            </span>
-          </div>
-        </div>
+        <span className="hidden sm:block w-px h-4 bg-slate-200 dark:bg-white/10" aria-hidden="true" />
 
-        {/* Centered Circular Progress Ring */}
-        <div className="relative flex items-center justify-center shrink-0">
-          <svg className="w-12 h-12 transform -rotate-90">
-            <circle
-              cx="24"
-              cy="24"
-              r="19"
-              className="stroke-slate-100 dark:stroke-slate-855"
-              strokeWidth="3"
-              fill="transparent"
-            />
-            <circle
-              cx="24"
-              cy="24"
-              r="19"
-              className="stroke-green-600 dark:stroke-green-500 transition-all duration-500"
-              strokeWidth="3.5"
-              fill="transparent"
-              strokeDasharray={2 * Math.PI * 19}
-              strokeDashoffset={2 * Math.PI * 19 * (1 - (totalTasks > 0 ? completedTasks / totalTasks : 0))}
-              strokeLinecap="round"
-            />
-          </svg>
-          <span className="absolute text-[10px] font-extrabold font-mono text-slate-800 dark:text-slate-100">
-            {completionRate}%
+        <div className="flex items-center gap-2.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 capitalize">
+            {t('completed') || 'Completed'}
+          </span>
+          <span className="text-sm font-semibold font-mono tabular-nums text-slate-900 dark:text-slate-100">
+            {completedTasks}
+            <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
+              {' '}
+              / {totalTasks}
+            </span>
           </span>
         </div>
+      </div>
+
+      {/* Compact Completion Progress Bar */}
+      <div className="flex items-center gap-3 sm:min-w-[180px]">
+        <div className="flex-1 h-1.5 bg-slate-200/80 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full bg-emerald-500 transition-[width] duration-300 ease-[var(--ease-out-expo)]"
+            style={{ width: `${completionRate}%` }}
+          />
+        </div>
+        <span className="text-xs font-semibold font-mono tabular-nums text-slate-700 dark:text-slate-300 w-9 text-right">
+          {completionRate}%
+        </span>
       </div>
     </div>
   );

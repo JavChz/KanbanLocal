@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useKanbanStore } from '../store/useKanbanStore';
 import type { Task, TaskStatus, ProjectBackground } from '../types/kanban';
 import { Column } from '../components/Board/Column';
+import { TaskCardVisual } from '../components/Board/TaskCard';
 import { TaskModal } from '../components/Board/TaskModal';
 import { BoardHeader } from '../components/Board/BoardHeader';
 import { EditProjectModal } from '../components/Board/EditProjectModal';
@@ -22,6 +23,7 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useTranslation } from 'react-i18next';
 import { useDragStore } from '../store/useDragStore';
 import { toast } from '../store/useToastStore';
+import { resolveProjectColorVar } from '../utils/colors';
 
 export const BoardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,7 +36,6 @@ export const BoardView: React.FC = () => {
     projects,
     setLastOpenedProject,
     addTask,
-    moveTask,
     moveAndReorderTask,
     updateProject,
     deleteProject,
@@ -45,44 +46,41 @@ export const BoardView: React.FC = () => {
   const project = projects.find((p) => p.id === id);
 
   // Modal states
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeCardWidth, setActiveCardWidth] = useState<number | undefined>(undefined);
 
-  // Filter tasks for this project
-  const projectTasks = tasks.filter((t) => t.projectId === id && !t.archived);
+  const projectTasks = useMemo(
+    () => tasks.filter((t) => t.projectId === id && !t.archived),
+    [tasks, id]
+  );
+
+  // Derive task modal selection cleanly from either explicit click or ?task= param
+  const taskIdParam = searchParams.get('task');
+  const hasMatchingParamTask = Boolean(
+    taskIdParam && projectTasks.some((t) => t.id === taskIdParam)
+  );
+  const effectiveTaskId = isTaskModalOpen ? selectedTaskId : hasMatchingParamTask ? taskIdParam : null;
+  const effectiveTaskModalOpen = isTaskModalOpen || hasMatchingParamTask;
+  const selectedTask = effectiveTaskId ? tasks.find((t) => t.id === effectiveTaskId) ?? null : null;
 
   // Update lastOpenedProject on mount/id change
   useEffect(() => {
     if (id && project) {
       setLastOpenedProject(id);
     } else if (id && !project) {
-      // If project doesn't exist, reset last opened and redirect to home
       setLastOpenedProject(null);
       navigate('/', { replace: true });
     }
   }, [id, project, setLastOpenedProject, navigate]);
 
-  // Pre-open task modal if `task` query parameter is present
-  useEffect(() => {
-    const taskIdParam = searchParams.get('task');
-    if (taskIdParam && projectTasks.length > 0) {
-      const taskToOpen = projectTasks.find((t) => t.id === taskIdParam);
-      if (taskToOpen) {
-        setTimeout(() => {
-          setSelectedTask(taskToOpen);
-          setIsTaskModalOpen(true);
-        }, 0);
-      }
-    }
-  }, [searchParams, projectTasks]);
-
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, // 5px drag threshold allows normal clicks to pass through
+        distance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -99,11 +97,17 @@ export const BoardView: React.FC = () => {
     const getProjectIdAtPoint = (x: number, y: number): string | null => {
       if (typeof document.elementsFromPoint !== 'function') {
         const el = document.elementFromPoint(x, y);
-        return el?.getAttribute('data-project-drop-id') || el?.closest('[data-project-drop-id]')?.getAttribute('data-project-drop-id') || null;
+        return (
+          el?.getAttribute('data-project-drop-id') ||
+          el?.closest('[data-project-drop-id]')?.getAttribute('data-project-drop-id') ||
+          null
+        );
       }
       const elements = document.elementsFromPoint(x, y);
       for (const el of elements) {
-        const projId = el.getAttribute('data-project-drop-id') || el.closest('[data-project-drop-id]')?.getAttribute('data-project-drop-id');
+        const projId =
+          el.getAttribute('data-project-drop-id') ||
+          el.closest('[data-project-drop-id]')?.getAttribute('data-project-drop-id');
         if (projId) return projId;
       }
       return null;
@@ -137,10 +141,8 @@ export const BoardView: React.FC = () => {
     };
   }, [activeId, id]);
 
-  // If project doesn't exist, return early (all hooks have been called)
   if (!project || !id) return null;
 
-  // Group tasks by status
   const tasksByStatus = {
     TODO: projectTasks.filter((t) => t.status === 'TODO'),
     IN_PROGRESS: projectTasks.filter((t) => t.status === 'IN_PROGRESS'),
@@ -150,35 +152,29 @@ export const BoardView: React.FC = () => {
   const handleDragStart = (event: DragStartEvent) => {
     const taskId = event.active.id as string;
     setActiveId(taskId);
-    if (id) {
-      useDragStore.getState().setDraggedTask(taskId, id);
-    }
+    setActiveCardWidth(event.active.rect.current.initial?.width);
+    useDragStore.getState().setDraggedTask(taskId, id);
   };
 
+  // Only perform cross-column transitions in onDragOver to avoid same-column jitter on taller cards
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
-    if (!over || !id) return;
+    if (!over) return;
 
-    const activeId = active.id as string;
+    const activeTaskId = active.id as string;
     const overId = over.id as string;
+    if (activeTaskId === overId) return;
 
-    if (activeId === overId) return;
-
-    const activeTask = tasks.find((t) => t.id === activeId);
+    const activeTask = tasks.find((t) => t.id === activeTaskId);
     if (!activeTask) return;
 
     const isOverColumn = overId === 'TODO' || overId === 'IN_PROGRESS' || overId === 'DONE';
+    const targetStatus: TaskStatus | undefined = isOverColumn
+      ? (overId as TaskStatus)
+      : tasks.find((t) => t.id === overId)?.status;
 
-    if (isOverColumn) {
-      const overStatus = overId as TaskStatus;
-      if (activeTask.status !== overStatus) {
-        moveTask(activeId, overStatus);
-      }
-    } else {
-      const overTask = tasks.find((t) => t.id === overId);
-      if (overTask) {
-        moveAndReorderTask(activeId, overId, id);
-      }
+    if (targetStatus && activeTask.status !== targetStatus) {
+      moveAndReorderTask(activeTaskId, overId, id);
     }
   };
 
@@ -186,11 +182,17 @@ export const BoardView: React.FC = () => {
     const getProjectIdAtPoint = (x: number, y: number): string | null => {
       if (typeof document.elementsFromPoint !== 'function') {
         const el = document.elementFromPoint(x, y);
-        return el?.getAttribute('data-project-drop-id') || el?.closest('[data-project-drop-id]')?.getAttribute('data-project-drop-id') || null;
+        return (
+          el?.getAttribute('data-project-drop-id') ||
+          el?.closest('[data-project-drop-id]')?.getAttribute('data-project-drop-id') ||
+          null
+        );
       }
       const elements = document.elementsFromPoint(x, y);
       for (const el of elements) {
-        const projId = el.getAttribute('data-project-drop-id') || el.closest('[data-project-drop-id]')?.getAttribute('data-project-drop-id');
+        const projId =
+          el.getAttribute('data-project-drop-id') ||
+          el.closest('[data-project-drop-id]')?.getAttribute('data-project-drop-id');
         if (projId) return projId;
       }
       return null;
@@ -198,7 +200,6 @@ export const BoardView: React.FC = () => {
 
     let targetProjectId = useDragStore.getState().hoveredProjectId;
 
-    // Check last known pointer coordinates captured on pointermove / pointerup
     if (!targetProjectId && lastCoordRef.current) {
       const candidateId = getProjectIdAtPoint(lastCoordRef.current.x, lastCoordRef.current.y);
       if (candidateId && candidateId !== id) {
@@ -206,7 +207,6 @@ export const BoardView: React.FC = () => {
       }
     }
 
-    // Fallback: calculate drop coordinates from activatorEvent + delta if available
     if (!targetProjectId && event.activatorEvent) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rawEvent = (event.activatorEvent as any).nativeEvent || event.activatorEvent;
@@ -238,33 +238,61 @@ export const BoardView: React.FC = () => {
           }
         );
       }
+    } else if (event.over && event.active.id !== event.over.id) {
+      moveAndReorderTask(event.active.id as string, event.over.id as string, id);
     }
 
     setActiveId(null);
+    setActiveCardWidth(undefined);
+    lastCoordRef.current = null;
+    useDragStore.getState().clearDrag();
+  };
+
+  const handleDragCancel = () => {
+    setActiveId(null);
+    setActiveCardWidth(undefined);
     lastCoordRef.current = null;
     useDragStore.getState().clearDrag();
   };
 
   const handleAddNewTask = (title: string, status: TaskStatus, position?: 'top' | 'bottom') => {
-    addTask({
-      title,
-      status,
-      projectId: id,
-      description: '',
-      tags: [],
-      links: [],
-    }, position);
+    addTask(
+      {
+        title,
+        status,
+        projectId: id,
+        description: '',
+        tags: [],
+        links: [],
+      },
+      position
+    );
   };
 
   const handleArchiveAllDone = () => {
     const doneTasks = tasks.filter((t) => t.projectId === id && t.status === 'DONE' && !t.archived);
-    doneTasks.forEach((t) => {
-      updateTask(t.id, { archived: true });
+    if (doneTasks.length === 0) return;
+
+    const archivedIds = doneTasks.map((t) => t.id);
+    archivedIds.forEach((taskId) => {
+      updateTask(taskId, { archived: true });
+    });
+
+    toast.info(t('archived_count', { count: archivedIds.length }), {
+      duration: 5000,
+      action: {
+        label: t('unarchive', 'Restore'),
+        onClick: () => {
+          archivedIds.forEach((taskId) => {
+            updateTask(taskId, { archived: false });
+          });
+        },
+      },
     });
   };
 
   const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
+    setSelectedTaskId(task.id);
     setIsTaskModalOpen(true);
   };
 
@@ -294,7 +322,7 @@ export const BoardView: React.FC = () => {
 
   const handleCloseTaskModal = () => {
     setIsTaskModalOpen(false);
-    setSelectedTask(null);
+    setSelectedTaskId(null);
     if (searchParams.has('task')) {
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('task');
@@ -303,19 +331,20 @@ export const BoardView: React.FC = () => {
   };
 
   const handlePrioritizeBoard = () => {
-    if (!id) return;
     prioritizeTasks(id);
   };
 
   const handlePrioritizeColumn = (status: TaskStatus) => {
-    if (!id) return;
     prioritizeTasks(id, status);
   };
 
+  const activeOverlayTask = activeId ? tasks.find((t) => t.id === activeId) : null;
+  const projectColorVar = resolveProjectColorVar(project.color);
+
   return (
     <div
-      className="flex flex-col gap-6 h-full animate-fade-in"
-      style={{ '--project-color': `var(--color-${project.color})` } as React.CSSProperties}
+      className="flex flex-col gap-5 h-full animate-fade-in"
+      style={projectColorVar ? ({ '--project-color': projectColorVar } as React.CSSProperties) : undefined}
     >
       {/* Board Header Banner */}
       <BoardHeader
@@ -332,8 +361,9 @@ export const BoardView: React.FC = () => {
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
       >
-        <div className="flex-1 flex flex-col md:flex-row gap-6 w-full items-stretch md:items-start overflow-x-auto pb-4">
+        <div className="flex-1 flex flex-col md:flex-row gap-5 w-full items-stretch md:items-start overflow-x-auto pb-4">
           <Column
             status="TODO"
             title={t('todo')}
@@ -362,10 +392,23 @@ export const BoardView: React.FC = () => {
         </div>
 
         {createPortal(
-          <DragOverlay className="pointer-events-none" style={{ pointerEvents: 'none' }}>
-            {activeId ? (
-              <div className="glass-card p-4.5 rounded-xl text-sm font-medium text-slate-800 dark:text-slate-100 shadow-xl border-blue-500/50 scale-[1.03] rotate-[1.5deg] cursor-grabbing select-none opacity-90 pointer-events-none">
-                {tasks.find((t) => t.id === activeId)?.title}
+          <DragOverlay
+            zIndex={80}
+            dropAnimation={{
+              duration: 180,
+              easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+            className="pointer-events-none"
+            style={{ pointerEvents: 'none' }}
+          >
+            {activeOverlayTask ? (
+              <div
+                style={{
+                  ...(activeCardWidth ? { width: `${activeCardWidth}px` } : {}),
+                  ...(projectColorVar ? { '--project-color': projectColorVar } : {}),
+                } as React.CSSProperties}
+              >
+                <TaskCardVisual task={activeOverlayTask} isOverlay />
               </div>
             ) : null}
           </DragOverlay>,
@@ -376,7 +419,7 @@ export const BoardView: React.FC = () => {
       {/* Task Details Modal */}
       <TaskModal
         task={selectedTask}
-        isOpen={isTaskModalOpen}
+        isOpen={effectiveTaskModalOpen}
         onClose={handleCloseTaskModal}
       />
 
@@ -395,7 +438,7 @@ export const BoardView: React.FC = () => {
         isOpen={isArchiveOpen}
         onClose={() => setIsArchiveOpen(false)}
         onSelectTask={(task) => {
-          setSelectedTask(task);
+          setSelectedTaskId(task.id);
           setIsTaskModalOpen(true);
         }}
       />

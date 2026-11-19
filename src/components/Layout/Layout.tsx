@@ -31,8 +31,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   });
 
-  // Synchronize active project background with document.body
-  useProjectBackground(activeProject);
+  // Pass primitive background fields so task updates never tear down active background
+  useProjectBackground(activeProject?.background?.type, activeProject?.background?.value);
 
   useEffect(() => {
     try {
@@ -58,12 +58,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isBgImage = bgConfig && (bgConfig.type === 'image' || bgConfig.type === 'custom');
 
   const containerBgClass = hasCustomBg
-    ? isBgImage ? 'has-bg-image' : 'has-bg-solid'
-    : 'bg-slate-50 dark:bg-slate-950';
+    ? isBgImage
+      ? 'has-bg-image'
+      : 'has-bg-solid'
+    : 'bg-[#f4f6f9] dark:bg-[#090d16]';
 
   return (
     <div
-      className={`min-h-screen flex flex-col md:flex-row ${containerBgClass} text-slate-900 dark:text-slate-100 transition-all duration-300`}
+      className={`min-h-screen flex flex-col md:flex-row ${containerBgClass} text-slate-900 dark:text-slate-100 transition-colors duration-200`}
     >
       {/* Mobile Top Header */}
       <MobileHeader
@@ -71,13 +73,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
-      {/* Sidebar Overlay (Mobile) */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-slate-900/30 backdrop-blur-xs z-40 md:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+      {/* Animated Mobile Sidebar Backdrop */}
+      <div
+        className={`fixed inset-0 bg-slate-900/35 dark:bg-slate-950/60 backdrop-blur-xs z-[var(--z-drawer-backdrop)] md:hidden transition-opacity duration-200 ${
+          isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsSidebarOpen(false)}
+        aria-hidden={!isSidebarOpen}
+      />
 
       {/* Sidebar Panel */}
       <Sidebar
@@ -95,19 +98,24 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       />
 
       {/* Main Content Pane */}
-      <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-x-hidden relative min-h-[calc(100vh-53px)] md:min-h-screen transition-all duration-300">
-        <div id="modal-root" /> {/* Render target for portals */}
+      <main className="flex-1 p-4 sm:p-6 md:px-8 md:py-6 overflow-x-hidden relative min-h-[calc(100vh-53px)] md:min-h-screen">
+        <div id="modal-root" />
         {isSidebarCollapsed && (
           <button
+            type="button"
             onClick={() => setIsSidebarCollapsed(false)}
-            className="hidden md:flex absolute top-8 left-8 p-2 rounded-xl glass-panel border border-slate-200/50 dark:border-slate-800/30 text-slate-600 dark:text-slate-350 hover:bg-slate-200/55 dark:hover:bg-slate-800/40 transition-all duration-200 shadow-md hover:scale-105 active:scale-95 z-30 cursor-pointer"
+            className="hidden md:flex fixed top-5 left-5 p-2 rounded-xl glass-panel text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800/70 transition-all duration-150 shadow-sm active:scale-95 z-[var(--z-sticky)] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
             aria-label="Expand Sidebar"
             title="Expand Sidebar"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={17} />
           </button>
         )}
-        <div className={`max-w-7xl mx-auto h-full flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'md:pl-12' : ''}`}>
+        <div
+          className={`max-w-7xl mx-auto h-full flex flex-col transition-[padding] duration-200 ease-[var(--ease-out-expo)] ${
+            isSidebarCollapsed ? 'md:pl-12' : ''
+          }`}
+        >
           {children}
         </div>
       </main>

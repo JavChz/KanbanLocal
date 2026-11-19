@@ -1,131 +1,155 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useKanbanStore } from '../../../store/useKanbanStore';
 import { Globe, ChevronDown, Check } from 'lucide-react';
 
-const languages: { code: 'en' | 'fr' | 'ja' | 'es'; label: string; flag: string }[] = [
-  { code: 'en', label: 'English', flag: '🇺🇸 🇬🇧' },
-  { code: 'fr', label: 'Français', flag: '🇫🇷 🇨🇦' },
-  { code: 'ja', label: '日本語', flag: '🇯🇵' },
-  { code: 'es', label: 'Español', flag: '🇪🇸 🇲🇽' },
+const languages: { code: 'en' | 'fr' | 'ja' | 'es'; label: string; shortCode: string }[] = [
+  { code: 'en', label: 'English', shortCode: 'EN' },
+  { code: 'fr', label: 'Français', shortCode: 'FR' },
+  { code: 'ja', label: '日本語', shortCode: 'JA' },
+  { code: 'es', label: 'Español', shortCode: 'ES' },
 ];
 
 export const LanguageSelector: React.FC = () => {
   const { language, setLanguage } = useKanbanStore();
   const { t, i18n } = useTranslation();
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
+  const [menuRect, setMenuRect] = useState<{ top: number; left: number; width: number }>({
+    top: 0,
+    left: 0,
+    width: 240,
+  });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const activeLanguage = languages.find((l) => l.code === language) ?? languages[0];
 
   const handleLanguageChange = (lang: 'en' | 'fr' | 'ja' | 'es') => {
     setLanguage(lang);
     i18n.changeLanguage(lang);
   };
 
+  const handleToggle = () => {
+    if (!isLangDropdownOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const estimatedHeight = 190;
+      const openAbove =
+        rect.bottom + 6 + estimatedHeight > window.innerHeight - 12 &&
+        rect.top - estimatedHeight - 6 > 12;
+      setMenuRect({
+        top: openAbove ? rect.top - estimatedHeight - 6 : rect.bottom + 6,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+    setIsLangDropdownOpen((prev) => !prev);
+  };
+
+  useEffect(() => {
+    if (!isLangDropdownOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        setIsLangDropdownOpen(false);
+      }
+    };
+
+    const handleReposition = () => {
+      if (!triggerRef.current) return;
+      const rect = triggerRef.current.getBoundingClientRect();
+      setMenuRect({
+        top: rect.bottom + 6,
+        left: rect.left,
+        width: rect.width,
+      });
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('resize', handleReposition, { passive: true });
+    window.addEventListener('scroll', handleReposition, { capture: true, passive: true });
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('resize', handleReposition);
+      window.removeEventListener('scroll', handleReposition, true);
+    };
+  }, [isLangDropdownOpen]);
+
   return (
     <div className="flex flex-col gap-2 text-left relative">
-      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+      <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
         <Globe size={13} />
         {t('language')}
       </span>
 
       {/* Trigger Button */}
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/30 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-200/40 dark:hover:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-700 transition-all font-medium cursor-pointer"
+        onClick={handleToggle}
+        className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-slate-200/90 dark:border-white/10 bg-white/70 dark:bg-slate-900/40 text-sm text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:border-slate-300 dark:hover:border-white/20 transition-colors font-medium cursor-pointer"
+        aria-expanded={isLangDropdownOpen}
       >
         <div className="flex items-center gap-2.5">
-          <div className="flex gap-1.5 items-center">
-            {language === 'en' && (
-              <>
-                <img src="https://flagcdn.com/w20/us.png" alt="US" className="h-3 object-contain rounded-xs" />
-                <img src="https://flagcdn.com/w20/gb.png" alt="GB" className="h-3 object-contain rounded-xs" />
-              </>
-            )}
-            {language === 'fr' && (
-              <>
-                <img src="https://flagcdn.com/w20/fr.png" alt="FR" className="h-3 object-contain rounded-xs" />
-                <img src="https://flagcdn.com/w20/ca.png" alt="CA" className="h-3 object-contain rounded-xs" />
-              </>
-            )}
-            {language === 'es' && (
-              <>
-                <img src="https://flagcdn.com/w20/es.png" alt="ES" className="h-3 object-contain rounded-xs" />
-                <img src="https://flagcdn.com/w20/mx.png" alt="MX" className="h-3 object-contain rounded-xs" />
-              </>
-            )}
-            {language === 'ja' && (
-              <img src="https://flagcdn.com/w20/jp.png" alt="JP" className="h-3 object-contain rounded-xs" />
-            )}
-          </div>
-          <span>
-            {language === 'en' && 'English'}
-            {language === 'fr' && 'Français'}
-            {language === 'es' && 'Español'}
-            {language === 'ja' && '日本語'}
+          <span className="inline-flex items-center justify-center w-7 h-5 rounded-md text-3xs font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">
+            {activeLanguage.shortCode}
           </span>
+          <span>{activeLanguage.label}</span>
         </div>
         <ChevronDown
           size={14}
-          className={`transition-transform duration-200 ${isLangDropdownOpen ? 'rotate-180' : ''}`}
+          className={`text-slate-400 transition-transform duration-150 ${isLangDropdownOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
-      {/* Dropdown Options */}
-      {isLangDropdownOpen && (
-        <>
-          {/* Backdrop overlay to close when clicking outside */}
-          <div className="fixed inset-0 z-30" onClick={() => setIsLangDropdownOpen(false)} />
-
-          <div className="absolute top-full left-0 right-0 mt-1.5 glass-panel p-1.5 rounded-xl shadow-xl z-40 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 animate-fade-in flex flex-col gap-1">
-            {languages.map((lang) => {
-              const isSelected = language === lang.code;
-              return (
-                <button
-                  key={lang.code}
-                  type="button"
-                  onClick={() => {
-                    handleLanguageChange(lang.code);
-                    setIsLangDropdownOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
-                    isSelected
-                      ? 'bg-blue-600/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-bold'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/55 dark:hover:bg-slate-800/40'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex gap-1.5 items-center w-9 justify-center flex-shrink-0">
-                      {lang.code === 'en' && (
-                        <>
-                          <img src="https://flagcdn.com/w20/us.png" alt="US" className="h-2.5 object-contain rounded-xs" />
-                          <img src="https://flagcdn.com/w20/gb.png" alt="GB" className="h-2.5 object-contain rounded-xs" />
-                        </>
-                      )}
-                      {lang.code === 'fr' && (
-                        <>
-                          <img src="https://flagcdn.com/w20/fr.png" alt="FR" className="h-2.5 object-contain rounded-xs" />
-                          <img src="https://flagcdn.com/w20/ca.png" alt="CA" className="h-2.5 object-contain rounded-xs" />
-                        </>
-                      )}
-                      {lang.code === 'es' && (
-                        <>
-                          <img src="https://flagcdn.com/w20/es.png" alt="ES" className="h-2.5 object-contain rounded-xs" />
-                          <img src="https://flagcdn.com/w20/mx.png" alt="MX" className="h-2.5 object-contain rounded-xs" />
-                        </>
-                      )}
-                      {lang.code === 'ja' && (
-                        <img src="https://flagcdn.com/w20/jp.png" alt="JP" className="h-2.5 object-contain rounded-xs" />
-                      )}
+      {/* Portaled Dropdown Options */}
+      {isLangDropdownOpen &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-[var(--z-popover)]"
+              onClick={() => setIsLangDropdownOpen(false)}
+            />
+            <div
+              style={{
+                top: `${menuRect.top}px`,
+                left: `${menuRect.left}px`,
+                width: `${menuRect.width}px`,
+              }}
+              className="fixed glass-panel p-1.5 rounded-xl shadow-2xl z-[var(--z-popover)] border border-slate-200/90 dark:border-white/12 bg-white dark:bg-slate-900 animate-popover-in flex flex-col gap-0.5"
+            >
+              {languages.map((lang) => {
+                const isSelected = language === lang.code;
+                return (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => {
+                      handleLanguageChange(lang.code);
+                      setIsLangDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                      isSelected
+                        ? 'bg-slate-900/[0.07] dark:bg-white/[0.09] text-slate-950 dark:text-white font-semibold'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="inline-flex items-center justify-center w-7 h-5 rounded text-3xs font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">
+                        {lang.shortCode}
+                      </span>
+                      <span>{lang.label}</span>
                     </div>
-                    <span>{lang.label}</span>
-                  </div>
-                  {isSelected && <Check size={12} />}
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
+                    {isSelected && <Check size={13} className="text-blue-600 dark:text-blue-400" />}
+                  </button>
+                );
+              })}
+            </div>
+          </>,
+          document.body
+        )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useTranslation } from 'react-i18next';
 import type { Task, TaskStatus } from '../../types/kanban';
 import { TaskCard } from './TaskCard';
 import { AddTaskButton } from './AddTaskButton';
@@ -26,11 +27,12 @@ export const Column: React.FC<ColumnProps> = ({
   onArchiveAllDone,
   onPrioritize,
 }) => {
+  const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const [isAdding, setIsAdding] = useState(false);
   const [addingPosition, setAddingPosition] = useState<'top' | 'bottom'>('top');
 
-  // Listen for the custom shortcut event to trigger task creation in the TODO column
+  // Listen for shortcut event to trigger task creation in the TODO column
   useEffect(() => {
     if (status === 'TODO') {
       const handleTrigger = () => {
@@ -46,7 +48,6 @@ export const Column: React.FC<ColumnProps> = ({
 
   const handleSaveTask = (taskTitle: string) => {
     onAddTask(taskTitle, status, addingPosition);
-    setIsAdding(false);
   };
 
   const handleCancelTask = () => {
@@ -66,12 +67,16 @@ export const Column: React.FC<ColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`w-full md:w-auto md:flex-1 min-w-0 md:min-w-[280px] flex flex-col rounded-2xl glass-panel p-4 transition-all duration-200 board-column ${
-        isOver ? 'bg-slate-200/40 dark:bg-slate-800/20 scale-[1.005] ring-1 ring-[var(--project-color)]/20' : ''
+      data-drag-over={isOver ? 'true' : undefined}
+      className={`w-full md:w-auto md:flex-1 min-w-0 md:min-w-[280px] flex flex-col rounded-2xl glass-panel p-3.5 transition-[background-color,border-color,box-shadow] duration-150 board-column ${
+        isOver
+          ? 'bg-slate-200/45 dark:bg-slate-800/45 ring-1 ring-[var(--project-color,var(--color-blue-500))]/35'
+          : ''
       }`}
     >
       {/* Column Header */}
       <ColumnHeader
+        status={status}
         title={title}
         count={tasks.length}
         showArchiveAllDone={status === 'DONE' && tasks.length > 0}
@@ -81,35 +86,51 @@ export const Column: React.FC<ColumnProps> = ({
       />
 
       {/* Task List */}
-      <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto min-h-[140px]">
+      <div className="flex-1 flex flex-col gap-2 overflow-y-auto min-h-[140px]">
         {/* Inline Task Form (Top) */}
         {isAdding && addingPosition === 'top' && (
           <ColumnTaskComposer
-            onSave={handleSaveTask}
+            onSave={(titleText) => {
+              handleSaveTask(titleText);
+            }}
             onCancel={handleCancelTask}
           />
         )}
 
-        <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-          <div className="flex flex-col gap-2.5">
-            {tasks.map((task) => (
-              <TaskCard key={task.id} task={task} onClick={(e) => onTaskClick(task, e)} />
-            ))}
+        {tasks.length === 0 && !isAdding ? (
+          <div
+            className={`flex-1 min-h-[120px] rounded-xl border border-dashed flex items-center justify-center p-4 text-center text-xs transition-colors duration-150 select-none ${
+              isOver
+                ? 'border-[var(--project-color,var(--color-blue-500))]/50 text-slate-600 dark:text-slate-300 bg-slate-200/30 dark:bg-white/[0.03]'
+                : 'border-slate-300/60 dark:border-white/8 text-slate-400 dark:text-slate-500'
+            }`}
+          >
+            <span>{t('no_tasks')}</span>
           </div>
-        </SortableContext>
+        ) : (
+          <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col gap-2">
+              {tasks.map((task) => (
+                <TaskCard key={task.id} task={task} onClick={(e) => onTaskClick(task, e)} />
+              ))}
+            </div>
+          </SortableContext>
+        )}
       </div>
 
       {/* Column Footer: Bottom Add Task Button or Composer */}
       {isAdding && addingPosition === 'bottom' ? (
-        <div className="mt-2.5 pt-0.5">
+        <div className="mt-2 pt-0.5">
           <ColumnTaskComposer
-            onSave={handleSaveTask}
+            onSave={(titleText) => {
+              handleSaveTask(titleText);
+            }}
             onCancel={handleCancelTask}
           />
         </div>
       ) : (
         !isAdding && (
-          <div className="mt-2.5 pt-0.5">
+          <div className="mt-2 pt-0.5">
             <AddTaskButton onClick={handleStartAddBottom} />
           </div>
         )

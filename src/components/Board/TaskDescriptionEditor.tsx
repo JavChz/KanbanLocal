@@ -154,17 +154,10 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
   return (
     <div className={`w-full flex flex-col gap-2 ${isExpanded ? 'flex-1 min-h-0' : ''}`}>
       {/* Editor Header Bar */}
-      <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-200/50 dark:border-slate-800/40 select-none">
-        <div className="flex items-center gap-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-            {t('task_description')}
-          </label>
-          {isExpanded && (
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-              {t('optimal_measure', '65–75ch optimal measure')}
-            </span>
-          )}
-        </div>
+      <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-200/70 dark:border-white/8 select-none">
+        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+          {t('task_description')}
+        </label>
 
         {/* View Mode Switcher & Expand Toggle */}
         <div className="flex items-center gap-1">
@@ -214,11 +207,11 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
 
       {/* Formatting Toolbar (shown when in Write mode) */}
       {mode === 'write' && (
-        <div className="flex items-center gap-0.5 flex-wrap py-1 px-1.5 rounded-lg bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/70 dark:border-slate-800/70 select-none">
+        <div className="flex items-center gap-0.5 flex-wrap py-1 px-1.5 rounded-lg bg-slate-100/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/8 select-none">
           <button
             type="button"
             onClick={() => insertText('**', '**', 'bold')}
-            className="p-1.5 rounded-md text-slate-600 dark:text-slate-350 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
             title="Bold (Ctrl+B)"
           >
             <Bold size={14} />
@@ -226,7 +219,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
           <button
             type="button"
             onClick={() => insertText('*', '*', 'italic')}
-            className="p-1.5 rounded-md text-slate-600 dark:text-slate-350 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
             title="Italic (Ctrl+I)"
           >
             <Italic size={14} />
@@ -234,7 +227,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
           <button
             type="button"
             onClick={() => insertLinePrefix('### ')}
-            className="p-1.5 rounded-md text-slate-600 dark:text-slate-350 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
             title="Heading"
           >
             <Heading size={14} />
@@ -245,7 +238,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
           <button
             type="button"
             onClick={() => insertLinePrefix('- ')}
-            className="p-1.5 rounded-md text-slate-600 dark:text-slate-350 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
             title="Bullet List"
           >
             <List size={14} />
@@ -253,7 +246,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
           <button
             type="button"
             onClick={() => insertLinePrefix('- [ ] ')}
-            className="p-1.5 rounded-md text-slate-600 dark:text-slate-350 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
             title="Checklist Item"
           >
             <CheckSquare size={14} />
@@ -261,7 +254,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
           <button
             type="button"
             onClick={() => insertLinePrefix('1. ')}
-            className="p-1.5 rounded-md text-slate-600 dark:text-slate-350 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
             title="Numbered List"
           >
             <ListOrdered size={14} />
@@ -272,7 +265,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
           <button
             type="button"
             onClick={() => insertText('`', '`', 'code')}
-            className="p-1.5 rounded-md text-slate-600 dark:text-slate-350 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
             title="Inline Code"
           >
             <Code size={14} />
@@ -280,7 +273,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
           <button
             type="button"
             onClick={() => insertLinePrefix('> ')}
-            className="p-1.5 rounded-md text-slate-600 dark:text-slate-350 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
             title="Quote"
           >
             <Quote size={14} />
@@ -288,7 +281,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
           <button
             type="button"
             onClick={() => insertText('[', '](url)', 'link text')}
-            className="p-1.5 rounded-md text-slate-600 dark:text-slate-350 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
             title="Link"
           >
             <Link size={14} />
@@ -306,7 +299,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
         {mode === 'write' && (
           <div className={`w-full flex flex-col ${isExpanded ? 'flex-1' : ''}`}>
             <div
-              className={`w-full rounded-xl border border-slate-300 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 p-3.5 focus-within:border-[var(--project-color,#3b82f6)] focus-within:ring-2 focus-within:ring-[var(--project-color,#3b82f6)]/20 transition-all shadow-xs ${
+              className={`w-full rounded-xl border border-slate-300/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/60 p-3.5 focus-within:border-[var(--project-color,#3b82f6)] focus-within:ring-2 focus-within:ring-[var(--project-color,#3b82f6)]/20 transition-all shadow-xs ${
                 isExpanded ? 'flex-1 flex flex-col' : ''
               }`}
             >
@@ -317,7 +310,7 @@ export const TaskDescriptionEditor: React.FC<TaskDescriptionEditorProps> = ({
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder || t('task_description')}
                 rows={isExpanded ? 14 : 5}
-                className={`w-full bg-transparent border-0 outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-450 dark:placeholder:text-slate-500 font-sans leading-relaxed text-[15px] resize-none max-w-[72ch] ${
+                className={`w-full bg-transparent border-0 outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 font-sans leading-relaxed text-[15px] resize-none max-w-[72ch] ${
                   isExpanded ? 'flex-1 min-h-[280px]' : 'min-h-[120px]'
                 }`}
               />

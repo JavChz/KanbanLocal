@@ -201,7 +201,7 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
       elements.push(
         <blockquote
           key={`quote-${i}`}
-          className="border-l-3 border-[var(--project-color,#3b82f6)] pl-3.5 my-2.5 py-0.5 italic text-slate-600 dark:text-slate-350 bg-slate-100/40 dark:bg-slate-900/20 rounded-r-lg"
+          className="border-l-3 border-[var(--project-color,#3b82f6)] pl-3.5 my-2.5 py-0.5 italic text-slate-600 dark:text-slate-300 bg-slate-100/50 dark:bg-slate-900/30 rounded-r-lg"
         >
           {renderInlineFormatting(trimmed.slice(2))}
         </blockquote>

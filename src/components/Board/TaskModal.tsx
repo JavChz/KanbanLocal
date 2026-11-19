@@ -6,8 +6,10 @@ import { Button } from '../ui/Button';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { Select } from '../ui/Select';
 import { useKanbanStore } from '../../store/useKanbanStore';
+import { toast } from '../../store/useToastStore';
 import { Trash2, Archive, ArchiveRestore, Maximize2, Minimize2, BookOpen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { resolveProjectColorVar } from '../../utils/colors';
 import { TaskTagsEditor } from './TaskTagsEditor';
 import { TaskLinksEditor } from './TaskLinksEditor';
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
@@ -21,11 +23,13 @@ interface TaskModalProps {
 
 interface TaskModalContentProps {
   task: Task;
+  isOpen: boolean;
   onClose: () => void;
 }
 
 const TaskModalContent: React.FC<TaskModalContentProps> = ({
   task,
+  isOpen,
   onClose,
 }) => {
   const { t } = useTranslation();
@@ -38,15 +42,18 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   const [links, setLinks] = useState<string[]>(task.links || []);
   const [deadline, setDeadline] = useState(task.deadline || '');
   const [priority, setPriority] = useState<TaskPriority>(task.priority || 'none');
-  const [isUrgent, setIsUrgent] = useState<boolean>(task.isUrgent ?? (task.priority === 'urgent_important' || task.priority === 'urgent_not_important'));
-  const [isImportant, setIsImportant] = useState<boolean>(task.isImportant ?? (task.priority === 'urgent_important' || task.priority === 'not_urgent_important'));
+  const [isUrgent, setIsUrgent] = useState<boolean>(
+    task.isUrgent ?? (task.priority === 'urgent_important' || task.priority === 'urgent_not_important')
+  );
+  const [isImportant, setIsImportant] = useState<boolean>(
+    task.isImportant ?? (task.priority === 'urgent_important' || task.priority === 'not_urgent_important')
+  );
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const [isExpanded, setIsExpanded] = useState<boolean>(() => {
     try {
       return localStorage.getItem('kanban_task_modal_expanded') === 'true';
-    } catch (_e) {
-      void _e;
+    } catch {
       return false;
     }
   });
@@ -56,8 +63,8 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
       const next = !prev;
       try {
         localStorage.setItem('kanban_task_modal_expanded', String(next));
-      } catch (_e) {
-        void _e;
+      } catch {
+        // Ignore storage errors
       }
       return next;
     });
@@ -65,6 +72,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
 
   // Keyboard shortcut to toggle expand/collapse (Alt + F)
   useEffect(() => {
+    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.altKey && (e.key.toLowerCase() === 'f' || e.key === 'Enter')) {
         e.preventDefault();
@@ -73,7 +81,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isOpen]);
 
   const handleSave = () => {
     if (!title.trim()) return;
@@ -97,8 +105,20 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   };
 
   const handleArchive = () => {
-    updateTask(task.id, { archived: !task.archived });
+    const previousArchived = Boolean(task.archived);
+    const nextArchived = !previousArchived;
+    updateTask(task.id, { archived: nextArchived });
     onClose();
+
+    if (nextArchived) {
+      toast.info(t('archived_count', { count: 1 }), {
+        duration: 5000,
+        action: {
+          label: t('unarchive', 'Restore'),
+          onClick: () => updateTask(task.id, { archived: previousArchived }),
+        },
+      });
+    }
   };
 
   const headerActions = (
@@ -135,7 +155,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   );
 
   const project = projects.find((p) => p.id === projectId);
-  const projectColorVar = project ? `var(--color-${project.color})` : undefined;
+  const projectColorVar = resolveProjectColorVar(project?.color);
   const combinedStyle: React.CSSProperties = {
     ...(projectColorVar ? { '--project-color': projectColorVar } : {}),
   } as React.CSSProperties;
@@ -143,7 +163,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   return (
     <>
       <Modal
-        isOpen={true}
+        isOpen={isOpen}
         onClose={onClose}
         title={t('task_details')}
         style={combinedStyle}
@@ -152,71 +172,89 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
         contentClassName={isExpanded ? 'flex-1 min-h-0 flex flex-col' : 'flex-1 min-h-0 overflow-y-auto pr-1'}
         headerActions={headerActions}
       >
-        {isExpanded ? (
-          <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-6 text-left">
-            {/* Primary Writing Area: Title & Complex Description */}
-            <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-y-auto pr-1">
-              <Input
-                label={t('task_title')}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder={t('task_title')}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSave();
-                  }
-                }}
-                required
-              />
+        {/* Single unified JSX tree preserves editor mode, scroll, and undo history on expand/collapse */}
+        <div
+          className={
+            isExpanded
+              ? 'flex-1 min-h-0 flex flex-col md:flex-row gap-6 text-left'
+              : 'flex flex-col gap-5 text-left'
+          }
+        >
+          {/* Primary Writing Area */}
+          <div
+            className={
+              isExpanded
+                ? 'flex-1 min-w-0 flex flex-col gap-4 overflow-y-auto pr-1'
+                : 'contents'
+            }
+          >
+            <Input
+              label={t('task_title')}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t('task_title')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSave();
+                }
+              }}
+              autoFocus={!isExpanded}
+              required
+            />
 
-              <TaskDescriptionEditor
-                value={description}
-                onChange={setDescription}
-                isExpanded={true}
-                onToggleExpand={toggleExpanded}
-                onSave={handleSave}
-                placeholder={t('task_description')}
-              />
-            </div>
+            <TaskDescriptionEditor
+              value={description}
+              onChange={setDescription}
+              isExpanded={isExpanded}
+              onToggleExpand={toggleExpanded}
+              onSave={handleSave}
+              placeholder={t('task_description')}
+            />
+          </div>
 
-            {/* Sidebar Metadata & Quick Markdown Reference */}
-            <div className="w-full md:w-80 flex flex-col gap-4 border-t md:border-t-0 md:border-l border-slate-200/70 dark:border-slate-800/70 pt-4 md:pt-0 md:pl-5 shrink-0 overflow-y-auto">
-              <Select
-                label={t('project')}
-                value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-                options={projects.map((p) => ({
-                  value: p.id,
-                  label: p.name,
-                }))}
-              />
+          {/* Metadata & Actions Column */}
+          <div
+            className={
+              isExpanded
+                ? 'w-full md:w-80 flex flex-col gap-4 border-t md:border-t-0 md:border-l border-slate-200/70 dark:border-white/8 pt-4 md:pt-0 md:pl-5 shrink-0 overflow-y-auto'
+                : 'contents'
+            }
+          >
+            <Select
+              label={t('project')}
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              options={projects.map((p) => ({
+                value: p.id,
+                label: p.name,
+              }))}
+            />
 
-              <Input
-                label={t('deadline') || 'Deadline'}
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-              />
+            <Input
+              label={t('deadline') || 'Deadline'}
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+            />
 
-              {/* Priority & Eisenhower Selector */}
-              <TaskPrioritySelector
-                priority={priority}
-                isUrgent={isUrgent}
-                isImportant={isImportant}
-                onChange={(p, u, i) => {
-                  setPriority(p);
-                  setIsUrgent(u);
-                  setIsImportant(i);
-                }}
-              />
+            <TaskPrioritySelector
+              priority={priority}
+              isUrgent={isUrgent}
+              isImportant={isImportant}
+              onChange={(p, u, i) => {
+                setPriority(p);
+                setIsUrgent(u);
+                setIsImportant(i);
+              }}
+            />
 
-              <TaskTagsEditor tags={tags} onChangeTags={setTags} />
+            <TaskTagsEditor tags={tags} onChangeTags={setTags} />
 
-              <TaskLinksEditor links={links} onChangeLinks={setLinks} />
+            <TaskLinksEditor links={links} onChangeLinks={setLinks} />
 
-              {/* Markdown Guide Box */}
-              <div className="rounded-xl p-3 bg-slate-100/60 dark:bg-slate-900/50 border border-slate-200/70 dark:border-slate-800/70 text-2xs text-slate-500 dark:text-slate-400">
+            {isExpanded && (
+              <div className="rounded-xl p-3 bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/70 dark:border-white/8 text-2xs text-slate-500 dark:text-slate-400">
                 <div className="font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                   <BookOpen size={12} className="text-[var(--project-color,#3b82f6)]" />
                   <span>{t('markdown_cheatsheet', 'Markdown Formatting')}</span>
@@ -226,7 +264,8 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                     <span className="text-slate-700 dark:text-slate-200 font-semibold">- [ ]</span> Checklist item
                   </div>
                   <div>
-                    <span className="text-slate-700 dark:text-slate-200 font-semibold">**bold**</span> or <span className="text-slate-700 dark:text-slate-200 font-semibold">*italic*</span>
+                    <span className="text-slate-700 dark:text-slate-200 font-semibold">**bold**</span> or{' '}
+                    <span className="text-slate-700 dark:text-slate-200 font-semibold">*italic*</span>
                   </div>
                   <div>
                     <span className="text-slate-700 dark:text-slate-200 font-semibold">###</span> Section heading
@@ -239,85 +278,15 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                   </div>
                 </div>
               </div>
+            )}
 
-              {/* Modal Action Footer */}
-              <div className="flex justify-end gap-2 mt-auto pt-3 border-t border-slate-200/60 dark:border-slate-800/60">
-                <Button type="button" variant="secondary" onClick={onClose}>
-                  {t('cancel')}
-                </Button>
-                <Button type="button" variant="primary" onClick={handleSave}>
-                  {t('save')}
-                </Button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-5 text-left">
-            {/* Task Title */}
-            <Input
-              label={t('task_title')}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={t('task_title')}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleSave();
-                }
-              }}
-              autoFocus
-              required
-            />
-
-            {/* Task Description */}
-            <TaskDescriptionEditor
-              value={description}
-              onChange={setDescription}
-              isExpanded={false}
-              onToggleExpand={toggleExpanded}
-              onSave={handleSave}
-              placeholder={t('task_description')}
-            />
-
-            {/* Project Selection */}
-            <Select
-              label={t('project')}
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              options={projects.map((p) => ({
-                value: p.id,
-                label: p.name,
-              }))}
-            />
-
-            {/* Task Deadline */}
-            <Input
-              label={t('deadline') || 'Deadline'}
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-            />
-
-            {/* Priority & Eisenhower Selector */}
-            <TaskPrioritySelector
-              priority={priority}
-              isUrgent={isUrgent}
-              isImportant={isImportant}
-              onChange={(p, u, i) => {
-                setPriority(p);
-                setIsUrgent(u);
-                setIsImportant(i);
-              }}
-            />
-
-            {/* Tags Section */}
-            <TaskTagsEditor tags={tags} onChangeTags={setTags} />
-
-            {/* Links Section */}
-            <TaskLinksEditor links={links} onChangeLinks={setLinks} />
-
-            {/* Modal Action Footer */}
-            <div className="sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-3 pb-1 border-t border-slate-200/60 dark:border-slate-800/60 flex justify-end gap-2 shrink-0 z-10 mt-2">
+            <div
+              className={
+                isExpanded
+                  ? 'flex justify-end gap-2 mt-auto pt-3 border-t border-slate-200/70 dark:border-white/8'
+                  : 'sticky bottom-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-3 pb-1 border-t border-slate-200/70 dark:border-white/8 flex justify-end gap-2 shrink-0 z-10 mt-2'
+              }
+            >
               <Button type="button" variant="secondary" onClick={onClose}>
                 {t('cancel')}
               </Button>
@@ -326,7 +295,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
               </Button>
             </div>
           </div>
-        )}
+        </div>
       </Modal>
 
       <ConfirmModal
@@ -346,12 +315,28 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  if (!isOpen || !task) return null;
+  const [cachedTask, setCachedTask] = useState<Task | null>(task);
+  const [prevOpen, setPrevOpen] = useState(isOpen);
+  const [sessionKey, setSessionKey] = useState(0);
+
+  if (task && task !== cachedTask) {
+    setCachedTask(task);
+  }
+
+  if (isOpen !== prevOpen) {
+    setPrevOpen(isOpen);
+    if (isOpen) {
+      setSessionKey((k) => k + 1);
+    }
+  }
+
+  if (!cachedTask) return null;
 
   return (
     <TaskModalContent
-      key={task.id}
-      task={task}
+      key={`${cachedTask.id}-${sessionKey}`}
+      task={cachedTask}
+      isOpen={isOpen && Boolean(task)}
       onClose={onClose}
     />
   );

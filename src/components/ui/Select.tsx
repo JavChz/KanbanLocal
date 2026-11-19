@@ -26,7 +26,7 @@ export const Select: React.FC<SelectProps> = ({
       {label && (
         <label
           htmlFor={selectId}
-          className="text-xs font-semibold text-slate-500 dark:text-slate-400"
+          className="text-xs font-medium text-slate-600 dark:text-slate-400"
         >
           {label}
         </label>
@@ -39,7 +39,7 @@ export const Select: React.FC<SelectProps> = ({
         {...props}
       >
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value} className="bg-slate-100 dark:bg-slate-900">
+          <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-900">
             {opt.label}
           </option>
         ))}

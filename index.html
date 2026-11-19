@@ -60,11 +60,24 @@
     <meta name="apple-mobile-web-app-title" content="KanbanLocal" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8fafc" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f6f9" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#090d16" />
     <link rel="icon" type="image/svg+xml" href="/KanbanLocal/favicon.svg" />
     <link rel="apple-touch-icon" href="/KanbanLocal/favicon.svg" />
     <link rel="manifest" href="/KanbanLocal/site.webmanifest" />
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem('personal-kanban-theme') || 'system';
+          var isDark =
+            theme === 'dark' ||
+            (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          root.classList.add('booting');
+          root.classList.toggle('dark', isDark);
+        } catch (e) {}
+      })();
+    </script>
 
     <!-- Structured Data (JSON-LD) for Search Engines -->
     <script type="application/ld+json">
@@ -112,8 +125,13 @@
         ]
       }
     </script>
-    <script type="module" crossorigin src="/KanbanLocal/assets/index-Cd3G2_6o.js"></script>
-    <link rel="stylesheet" crossorigin href="/KanbanLocal/assets/index-seaIcKwu.css">
+    <script type="module" crossorigin src="/KanbanLocal/assets/index-CmalzWtt.js"></script>
+    <link rel="modulepreload" crossorigin href="/KanbanLocal/assets/rolldown-runtime-Bh1tDfsg.js">
+    <link rel="modulepreload" crossorigin href="/KanbanLocal/assets/vendor-ChHyAr_z.js">
+    <link rel="modulepreload" crossorigin href="/KanbanLocal/assets/vendor-dnd-pBrrCiZY.js">
+    <link rel="modulepreload" crossorigin href="/KanbanLocal/assets/vendor-react-wzP4IX8Z.js">
+    <link rel="modulepreload" crossorigin href="/KanbanLocal/assets/vendor-i18n-PaLHWX5k.js">
+    <link rel="stylesheet" crossorigin href="/KanbanLocal/assets/index-BKMYZBqI.css">
   </head>
   <body>
     <!-- Fallback for search bots and users without JavaScript -->
